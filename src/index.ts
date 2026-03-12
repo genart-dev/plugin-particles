@@ -1,0 +1,74 @@
+/**
+ * @genart-dev/plugin-particles — Depth-aware atmospheric particle layers
+ *
+ * 4 layer types (falling, floating, scatter, mist),
+ * 15 presets, 8 MCP tools.
+ */
+
+import type { DesignPlugin, PluginContext } from "@genart-dev/core";
+import { particlesMcpTools } from "./particles-tools.js";
+import {
+  fallingLayerType,
+  floatingLayerType,
+  scatterLayerType,
+  mistLayerType,
+} from "./layers/index.js";
+
+const particlesPlugin: DesignPlugin = {
+  id: "particles",
+  name: "Particles",
+  version: "0.1.0",
+  description:
+    "Depth-aware atmospheric particle layers: falling (snow, rain, leaves), floating (dust, fireflies), " +
+    "scatter (ground elements), and mist (fog bands). 4 layer types, 15 presets, 8 MCP tools.",
+
+  layerTypes: [
+    fallingLayerType,
+    floatingLayerType,
+    scatterLayerType,
+    mistLayerType,
+  ],
+  tools: [],
+  exportHandlers: [],
+  mcpTools: particlesMcpTools,
+
+  async initialize(_context: PluginContext): Promise<void> {},
+  dispose(): void {},
+};
+
+export default particlesPlugin;
+
+// Re-export layer types
+export {
+  fallingLayerType,
+  floatingLayerType,
+  scatterLayerType,
+  mistLayerType,
+} from "./layers/index.js";
+
+// Re-export presets
+export { ALL_PRESETS, getPreset, filterPresets, searchPresets, categoryToLayerType } from "./presets/index.js";
+export type {
+  ParticlePreset,
+  FallingPreset,
+  FloatingPreset,
+  ScatterPreset,
+  MistPreset,
+  PresetCategory,
+} from "./presets/types.js";
+
+// Re-export tools
+export { particlesMcpTools } from "./particles-tools.js";
+
+// Re-export shared utilities
+export { mulberry32 } from "./shared/prng.js";
+export { createValueNoise, createFractalNoise } from "./shared/noise.js";
+export { parseHex, toHex, lerpColor, varyColor } from "./shared/color-utils.js";
+export { applyDepthEasing, computeDepth, applyDepthToParticle, sampleDepthDistribution } from "./shared/depth.js";
+export type { DepthEasing, DepthDistribution, DepthConfig } from "./shared/depth.js";
+export {
+  drawCircle, drawSnowflake, drawRaindrop, drawLeaf, drawPetal, drawAsh, drawDust,
+  drawDot, drawWisp, drawFirefly, drawPollen, drawSparkle,
+  drawStone, drawFlower, drawDebris, drawAcorn,
+  getFallingShape, getFloatingShape, getScatterShape,
+} from "./shared/shapes.js";
