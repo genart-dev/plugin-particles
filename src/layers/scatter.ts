@@ -8,6 +8,14 @@ import { mulberry32 } from "../shared/prng.js";
 import { varyColor } from "../shared/color-utils.js";
 import { computeDepth, applyDepthToParticle } from "../shared/depth.js";
 import type { DepthEasing } from "../shared/depth.js";
+import {
+  createDepthLaneProperty,
+  createAtmosphericModeProperty,
+  resolveDepthLane,
+  laneSubLevelAttenuation,
+  applyAtmosphericDepth,
+} from "../shared/depth-lanes.js";
+import type { AtmosphericMode } from "../shared/depth-lanes.js";
 import { getScatterShape } from "../shared/shapes.js";
 import { getPreset } from "../presets/index.js";
 import type { ScatterPreset } from "../presets/types.js";
@@ -26,6 +34,9 @@ const SCATTER_PROPERTIES: LayerPropertySchema[] = [
       { value: "fallen-leaves", label: "Fallen Leaves" },
       { value: "pebbles", label: "Pebbles" },
       { value: "wildflowers", label: "Wildflowers" },
+      { value: "shells", label: "Shells" },
+      { value: "acorns", label: "Acorns" },
+      { value: "sea-foam", label: "Sea Foam" },
     ],
   },
   { key: "seed", label: "Seed", type: "number", default: 42, min: 0, max: 99999, step: 1, group: "generation" },
@@ -42,6 +53,7 @@ const SCATTER_PROPERTIES: LayerPropertySchema[] = [
       { value: "debris", label: "Debris" },
       { value: "petal", label: "Petal" },
       { value: "acorn", label: "Acorn" },
+      { value: "shell", label: "Shell" },
     ],
   },
   { key: "count", label: "Count", type: "number", default: 80, min: 5, max: 2000, step: 5, group: "density" },
@@ -79,6 +91,8 @@ const SCATTER_PROPERTIES: LayerPropertySchema[] = [
       { value: "exponential", label: "Exponential" },
     ],
   },
+  createDepthLaneProperty("ground-plane"),
+  createAtmosphericModeProperty(),
 ];
 
 function resolveProps(properties: LayerProperties): {
@@ -95,6 +109,8 @@ function resolveProps(properties: LayerProperties): {
   groundY: number;
   horizonY: number;
   depthEasing: DepthEasing;
+  depthLane: string;
+  atmosphericMode: AtmosphericMode;
 } {
   const presetId = properties.preset as string | undefined;
   const preset = presetId ? getPreset(presetId) : undefined;
@@ -114,6 +130,8 @@ function resolveProps(properties: LayerProperties): {
     groundY: (properties.groundY as number) ?? sp?.groundY ?? 0.7,
     horizonY: (properties.horizonY as number) ?? sp?.horizonY ?? 0.35,
     depthEasing: (properties.depthEasing as DepthEasing) ?? sp?.depthEasing ?? "quadratic",
+    depthLane: (properties.depthLane as string) ?? "ground-plane",
+    atmosphericMode: (properties.atmosphericMode as AtmosphericMode) ?? "none",
   };
 }
 
@@ -138,11 +156,9 @@ function sampleDistribution(
       break;
     }
     case "edge-weighted":
-      // Push toward edges
       x = x < 0.5 ? x * x * 2 : 1 - (1 - x) * (1 - x) * 2;
       break;
     case "center-weighted":
-      // Push toward center using Gaussian-like
       x = (rng() + rng() + rng()) / 3;
       y = (rng() + rng() + rng()) / 3;
       break;
@@ -172,14 +188,18 @@ export const scatterLayerType: LayerTypeDefinition = {
     const rng = mulberry32(p.seed);
     const drawShape = getScatterShape(p.elementType);
 
-    // Generate cluster centers for clustered distribution
     const clusterCount = 3 + Math.floor(rng() * 4);
     const clusterCenters = Array.from({ length: clusterCount }, () => ({
       x: rng(),
       y: rng(),
     }));
 
-    const groundZone = 1 - p.groundY; // height of scatter zone
+    const groundZone = 1 - p.groundY;
+
+    // Depth lane attenuation
+    const laneConfig = resolveDepthLane(p.depthLane);
+    const laneDepth = laneConfig?.depth ?? 0.5;
+    const subAtt = laneConfig ? laneSubLevelAttenuation(laneConfig.subLevel) : null;
 
     for (let i = 0; i < p.count; i++) {
       const { x: nx, y: ny } = sampleDistribution(
@@ -193,18 +213,28 @@ export const scatterLayerType: LayerTypeDefinition = {
       const normalizedY = p.groundY + ny * groundZone;
       const y = normalizedY * height;
 
-      // Depth from horizon
       const depth = computeDepth(normalizedY, {
         horizonY: p.horizonY,
         easing: p.depthEasing,
         distribution: "uniform",
       });
 
-      const { size, opacity } = applyDepthToParticle(depth, p.sizeMin, p.sizeMax, 1);
+      let { size, opacity } = applyDepthToParticle(depth, p.sizeMin, p.sizeMax, 1);
 
-      const color = p.colorVariation > 0
+      // Apply lane sub-level attenuation
+      if (subAtt) {
+        size *= subAtt.sizeScale;
+        opacity *= subAtt.opacity;
+      }
+
+      let color = p.colorVariation > 0
         ? varyColor(p.color, p.colorVariation, rng)
         : p.color;
+
+      // Atmospheric depth color adjustment
+      if (p.atmosphericMode !== "none") {
+        color = applyAtmosphericDepth(color, laneDepth, p.atmosphericMode);
+      }
 
       const rotation = (rng() - 0.5) * p.rotationRange;
 

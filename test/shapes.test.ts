@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   drawCircle, drawSnowflake, drawRaindrop, drawLeaf, drawPetal, drawAsh, drawDust,
+  drawEmber, drawNeedle,
   drawDot, drawWisp, drawFirefly, drawPollen, drawSparkle,
-  drawStone, drawFlower, drawDebris, drawAcorn,
+  drawButterfly, drawBubble, drawSeedTuft,
+  drawStone, drawFlower, drawDebris, drawAcorn, drawShell,
   getFallingShape, getFloatingShape, getScatterShape,
 } from "../src/shared/shapes.js";
 import { mulberry32 } from "../src/shared/prng.js";
@@ -46,15 +48,21 @@ describe("particle shapes", () => {
     { name: "petal", fn: drawPetal },
     { name: "ash", fn: drawAsh },
     { name: "dust", fn: drawDust },
+    { name: "ember", fn: drawEmber },
+    { name: "needle", fn: drawNeedle },
     { name: "dot", fn: drawDot },
     { name: "wisp", fn: drawWisp },
     { name: "firefly", fn: drawFirefly },
     { name: "pollen", fn: drawPollen },
     { name: "sparkle", fn: drawSparkle },
+    { name: "butterfly", fn: drawButterfly },
+    { name: "bubble", fn: drawBubble },
+    { name: "seedTuft", fn: drawSeedTuft },
     { name: "stone", fn: drawStone },
     { name: "flower", fn: drawFlower },
     { name: "debris", fn: drawDebris },
     { name: "acorn", fn: drawAcorn },
+    { name: "shell", fn: drawShell },
   ];
 
   for (const { name, fn } of allShapes) {
@@ -69,6 +77,8 @@ describe("shape lookup", () => {
     expect(getFallingShape("snowflake")).toBe(drawSnowflake);
     expect(getFallingShape("raindrop")).toBe(drawRaindrop);
     expect(getFallingShape("leaf")).toBe(drawLeaf);
+    expect(getFallingShape("ember")).toBe(drawEmber);
+    expect(getFallingShape("needle")).toBe(drawNeedle);
   });
 
   it("getFallingShape returns circle for unknown type", () => {
@@ -78,6 +88,9 @@ describe("shape lookup", () => {
   it("getFloatingShape returns correct shapes", () => {
     expect(getFloatingShape("firefly")).toBe(drawFirefly);
     expect(getFloatingShape("wisp")).toBe(drawWisp);
+    expect(getFloatingShape("butterfly")).toBe(drawButterfly);
+    expect(getFloatingShape("bubble")).toBe(drawBubble);
+    expect(getFloatingShape("seed-tuft")).toBe(drawSeedTuft);
   });
 
   it("getFloatingShape returns dot for unknown type", () => {
@@ -88,6 +101,7 @@ describe("shape lookup", () => {
     expect(getScatterShape("stone")).toBe(drawStone);
     expect(getScatterShape("flower")).toBe(drawFlower);
     expect(getScatterShape("acorn")).toBe(drawAcorn);
+    expect(getScatterShape("shell")).toBe(drawShell);
   });
 
   it("getScatterShape returns leaf for unknown type", () => {

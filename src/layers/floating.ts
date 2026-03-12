@@ -7,6 +7,14 @@ import type {
 import { mulberry32 } from "../shared/prng.js";
 import { applyDepthToParticle } from "../shared/depth.js";
 import type { DepthEasing } from "../shared/depth.js";
+import {
+  createDepthLaneProperty,
+  createAtmosphericModeProperty,
+  resolveDepthLane,
+  laneSubLevelAttenuation,
+  applyAtmosphericDepth,
+} from "../shared/depth-lanes.js";
+import type { AtmosphericMode } from "../shared/depth-lanes.js";
 import { getFloatingShape } from "../shared/shapes.js";
 import { getPreset } from "../presets/index.js";
 import type { FloatingPreset } from "../presets/types.js";
@@ -24,6 +32,10 @@ const FLOATING_PROPERTIES: LayerPropertySchema[] = [
       { value: "fireflies", label: "Fireflies" },
       { value: "fog-wisps", label: "Fog Wisps" },
       { value: "pollen", label: "Pollen" },
+      { value: "dandelion-seeds", label: "Dandelion Seeds" },
+      { value: "butterflies", label: "Butterflies" },
+      { value: "bubbles", label: "Bubbles" },
+      { value: "sparkles", label: "Sparkles" },
     ],
   },
   { key: "seed", label: "Seed", type: "number", default: 42, min: 0, max: 99999, step: 1, group: "generation" },
@@ -39,6 +51,9 @@ const FLOATING_PROPERTIES: LayerPropertySchema[] = [
       { value: "firefly", label: "Firefly" },
       { value: "pollen", label: "Pollen" },
       { value: "sparkle", label: "Sparkle" },
+      { value: "butterfly", label: "Butterfly" },
+      { value: "bubble", label: "Bubble" },
+      { value: "seed-tuft", label: "Seed Tuft" },
     ],
   },
   { key: "count", label: "Count", type: "number", default: 100, min: 5, max: 2000, step: 5, group: "density" },
@@ -66,6 +81,8 @@ const FLOATING_PROPERTIES: LayerPropertySchema[] = [
     ],
   },
   { key: "horizonY", label: "Horizon Y", type: "number", default: 0.4, min: 0, max: 1, step: 0.05, group: "depth" },
+  createDepthLaneProperty("midground"),
+  createAtmosphericModeProperty(),
 ];
 
 function resolveProps(properties: LayerProperties): {
@@ -84,6 +101,8 @@ function resolveProps(properties: LayerProperties): {
   depthBandMax: number;
   depthEasing: DepthEasing;
   horizonY: number;
+  depthLane: string;
+  atmosphericMode: AtmosphericMode;
 } {
   const presetId = properties.preset as string | undefined;
   const preset = presetId ? getPreset(presetId) : undefined;
@@ -105,6 +124,8 @@ function resolveProps(properties: LayerProperties): {
     depthBandMax: (properties.depthBandMax as number) ?? fp?.depthBandMax ?? 0.8,
     depthEasing: (properties.depthEasing as DepthEasing) ?? fp?.depthEasing ?? "linear",
     horizonY: (properties.horizonY as number) ?? fp?.horizonY ?? 0.4,
+    depthLane: (properties.depthLane as string) ?? "midground",
+    atmosphericMode: (properties.atmosphericMode as AtmosphericMode) ?? "none",
   };
 }
 
@@ -128,6 +149,11 @@ export const floatingLayerType: LayerTypeDefinition = {
 
     const bandHeight = p.depthBandMax - p.depthBandMin;
 
+    // Depth lane attenuation
+    const laneConfig = resolveDepthLane(p.depthLane);
+    const laneDepth = laneConfig?.depth ?? 0.5;
+    const subAtt = laneConfig ? laneSubLevelAttenuation(laneConfig.subLevel) : null;
+
     for (let i = 0; i < p.count; i++) {
       // Position within depth band
       const depthT = rng(); // 0-1 within band
@@ -143,17 +169,29 @@ export const floatingLayerType: LayerTypeDefinition = {
       const y = baseY + driftY;
 
       // Depth-based sizing
-      const { size, opacity } = applyDepthToParticle(
+      let { size, opacity } = applyDepthToParticle(
         depthT,
         p.sizeMin,
         p.sizeMax,
         p.opacity,
       );
 
+      // Apply lane sub-level attenuation
+      if (subAtt) {
+        size *= subAtt.sizeScale;
+        opacity *= subAtt.opacity;
+      }
+
+      // Atmospheric depth color adjustment
+      let color = p.color;
+      if (p.atmosphericMode !== "none") {
+        color = applyAtmosphericDepth(color, laneDepth, p.atmosphericMode);
+      }
+
       const rotation = rng() * Math.PI * 2;
 
       ctx.globalAlpha = opacity;
-      drawShape(ctx, bx + x, by + y, size, rotation, p.color, rng);
+      drawShape(ctx, bx + x, by + y, size, rotation, color, rng);
     }
 
     ctx.globalAlpha = 1;

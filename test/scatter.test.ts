@@ -63,5 +63,25 @@ describe("particles:scatter", () => {
     expect(keys).toContain("distribution");
     expect(keys).toContain("clusterStrength");
     expect(keys).toContain("groundY");
+    expect(keys).toContain("depthLane");
+    expect(keys).toContain("atmosphericMode");
+  });
+
+  it("createDefault has depthLane and atmosphericMode", () => {
+    const defaults = scatterLayerType.createDefault();
+    expect(defaults.depthLane).toBe("ground-plane");
+    expect(defaults.atmosphericMode).toBe("none");
+  });
+
+  it("validates new presets (shells, acorns, sea-foam)", () => {
+    for (const id of ["shells", "acorns", "sea-foam"]) {
+      expect(scatterLayerType.validate({ preset: id })).toBeNull();
+    }
+  });
+
+  it("renders shells preset without error", () => {
+    const ctx = createMockCtx();
+    const props = { ...scatterLayerType.createDefault(), preset: "shells", elementType: "shell", count: 5 };
+    expect(() => scatterLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
   });
 });

@@ -1,9 +1,9 @@
 /**
  * MCP tool definitions for plugin-particles.
  *
- * 8 tools: add_particles, list_particle_presets, set_particle_depth,
- * set_particle_motion, set_particle_style, create_atmosphere,
- * randomize_particles, set_mist_band.
+ * 9 tools: add_particles, list_particle_presets, set_particle_depth,
+ * set_particle_motion, set_particle_style, set_depth_lane,
+ * create_atmosphere, randomize_particles, set_mist_band.
  */
 
 import type {
@@ -17,6 +17,7 @@ import type {
 import { ALL_PRESETS, getPreset, filterPresets, categoryToLayerType } from "./presets/index.js";
 import type { PresetCategory, ParticlePreset } from "./presets/types.js";
 import { mulberry32 } from "./shared/prng.js";
+import { DEPTH_LANE_OPTIONS } from "./shared/depth-lanes.js";
 
 function textResult(text: string): McpToolResult {
   return { content: [{ type: "text", text }] };
@@ -147,18 +148,20 @@ const addParticlesTool: McpToolDefinition = {
   name: "add_particles",
   description:
     "Add a particle layer by preset name. Auto-resolves to the correct layer type (falling, floating, scatter, mist) " +
-    "from the preset category. Available presets: snow, rain, autumn-leaves, petals, dust-motes, fireflies, " +
-    "fog-wisps, pollen, fallen-leaves, pebbles, wildflowers, morning-mist, valley-fog, mountain-haze, ground-steam.",
+    "from the preset category. 29 presets available across all categories.",
   inputSchema: {
     type: "object",
     properties: {
       preset: {
         type: "string",
         enum: [
-          "snow", "rain", "autumn-leaves", "petals",
+          "snow", "rain", "autumn-leaves", "petals", "embers", "ash-fall",
+          "cherry-blossoms", "confetti", "pine-needles",
           "dust-motes", "fireflies", "fog-wisps", "pollen",
-          "fallen-leaves", "pebbles", "wildflowers",
+          "dandelion-seeds", "butterflies", "bubbles", "sparkles",
+          "fallen-leaves", "pebbles", "wildflowers", "shells", "acorns", "sea-foam",
           "morning-mist", "valley-fog", "mountain-haze", "ground-steam",
+          "ground-steam-thick", "smoke-wisps",
         ],
         description: "Particle preset name.",
       },
@@ -166,6 +169,16 @@ const addParticlesTool: McpToolDefinition = {
       color: { type: "string", description: "Override particle color as hex." },
       count: { type: "number", description: "Override particle count." },
       opacity: { type: "number", description: "Override opacity 0-1." },
+      depthLane: {
+        type: "string",
+        enum: DEPTH_LANE_OPTIONS.map((o) => o.value),
+        description: "Depth lane for scene integration (e.g. sky-1, midground-2, foreground-3).",
+      },
+      atmosphericMode: {
+        type: "string",
+        enum: ["none", "western", "ink-wash"],
+        description: "Atmospheric depth mode: western (blue shift), ink-wash (paper tone), none.",
+      },
       name: { type: "string", description: "Custom layer name." },
     },
     required: ["preset"],
@@ -182,6 +195,8 @@ const addParticlesTool: McpToolDefinition = {
     if (input.color) overrides.color = input.color;
     if (input.count !== undefined) overrides.count = input.count;
     if (input.opacity !== undefined) overrides.opacity = input.opacity;
+    if (input.depthLane) overrides.depthLane = input.depthLane;
+    if (input.atmosphericMode) overrides.atmosphericMode = input.atmosphericMode;
 
     const properties = presetToProperties(preset, seed, overrides);
     const layerType = categoryToLayerType(preset.category);
@@ -398,6 +413,62 @@ const setParticleStyleTool: McpToolDefinition = {
     ctx.emitChange("layer-updated");
 
     return textResult(`Updated style on "${layer.name}":\n${changes.join("\n")}`);
+  },
+};
+
+// ---------------------------------------------------------------------------
+// set_depth_lane
+// ---------------------------------------------------------------------------
+
+const setDepthLaneTool: McpToolDefinition = {
+  name: "set_depth_lane",
+  description:
+    "Set depth lane and atmospheric mode on a particle layer for cross-plugin depth coordination. " +
+    "Depth lanes: sky, far-background, background, midground, foreground, ground-plane, overlay (each with optional -1/-2/-3 sub-level). " +
+    "Atmospheric modes: western (blue shift + desaturation), ink-wash (warm paper tone), none.",
+  inputSchema: {
+    type: "object",
+    required: ["layerId"],
+    properties: {
+      layerId: { type: "string", description: "Target particle layer ID." },
+      depthLane: {
+        type: "string",
+        enum: DEPTH_LANE_OPTIONS.map((o) => o.value),
+        description: "Depth lane (e.g. background-2, foreground-1, ground-plane).",
+      },
+      atmosphericMode: {
+        type: "string",
+        enum: ["none", "western", "ink-wash"],
+        description: "Atmospheric depth mode.",
+      },
+    },
+  },
+  async handler(input: Record<string, unknown>, ctx: McpToolContext): Promise<McpToolResult> {
+    const layerId = input.layerId as string;
+    const layer = ctx.layers.get(layerId);
+    if (!layer) return errorResult(`Layer "${layerId}" not found.`);
+    if (!layer.type.startsWith("particles:")) {
+      return errorResult(`Layer "${layerId}" is type "${layer.type}", not a particles layer.`);
+    }
+
+    const changes: string[] = [];
+    const propUpdates: Partial<LayerProperties> = {};
+
+    if (input.depthLane !== undefined) {
+      propUpdates.depthLane = input.depthLane as string;
+      changes.push(`depthLane → ${input.depthLane}`);
+    }
+    if (input.atmosphericMode !== undefined) {
+      propUpdates.atmosphericMode = input.atmosphericMode as string;
+      changes.push(`atmosphericMode → ${input.atmosphericMode}`);
+    }
+
+    if (changes.length === 0) return errorResult("No depth lane changes specified.");
+
+    ctx.layers.updateProperties(layerId, propUpdates);
+    ctx.emitChange("layer-updated");
+
+    return textResult(`Updated depth lane on "${layer.name}":\n${changes.join("\n")}`);
   },
 };
 
@@ -619,6 +690,7 @@ export const particlesMcpTools: McpToolDefinition[] = [
   setParticleDepthTool,
   setParticleMotionTool,
   setParticleStyleTool,
+  setDepthLaneTool,
   createAtmosphereTool,
   randomizeParticlesTool,
   setMistBandTool,

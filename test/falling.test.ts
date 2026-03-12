@@ -74,5 +74,29 @@ describe("particles:falling", () => {
     expect(keys).toContain("count");
     expect(keys).toContain("windAngle");
     expect(keys).toContain("horizonY");
+    expect(keys).toContain("depthLane");
+    expect(keys).toContain("atmosphericMode");
+  });
+
+  it("createDefault has depthLane and atmosphericMode", () => {
+    const defaults = fallingLayerType.createDefault();
+    expect(defaults.depthLane).toBe("foreground");
+    expect(defaults.atmosphericMode).toBe("none");
+  });
+
+  it("validates new presets (embers, confetti, etc.)", () => {
+    for (const id of ["embers", "ash-fall", "cherry-blossoms", "confetti", "pine-needles"]) {
+      expect(fallingLayerType.validate({ preset: id })).toBeNull();
+    }
+  });
+
+  it("renders embers preset without error", () => {
+    const ctx = createMockCtx();
+    // embers uses drawEmber which needs createRadialGradient
+    (ctx as any).createRadialGradient = vi.fn(() => ({
+      addColorStop: vi.fn(),
+    }));
+    const props = { ...fallingLayerType.createDefault(), preset: "embers", particleType: "ember", count: 5 };
+    expect(() => fallingLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
   });
 });

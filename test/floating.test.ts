@@ -64,5 +64,26 @@ describe("particles:floating", () => {
     expect(keys).toContain("glow");
     expect(keys).toContain("driftRange");
     expect(keys).toContain("depthBandMin");
+    expect(keys).toContain("depthLane");
+    expect(keys).toContain("atmosphericMode");
+  });
+
+  it("createDefault has depthLane and atmosphericMode", () => {
+    const defaults = floatingLayerType.createDefault();
+    expect(defaults.depthLane).toBe("midground");
+    expect(defaults.atmosphericMode).toBe("none");
+  });
+
+  it("validates new presets (butterflies, bubbles, etc.)", () => {
+    for (const id of ["dandelion-seeds", "butterflies", "bubbles", "sparkles"]) {
+      expect(floatingLayerType.validate({ preset: id })).toBeNull();
+    }
+  });
+
+  it("renders butterflies preset without error", () => {
+    const ctx = createMockCtx();
+    (ctx as any).ellipse = vi.fn();
+    const props = { ...floatingLayerType.createDefault(), preset: "butterflies", particleType: "butterfly", count: 5 };
+    expect(() => floatingLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
   });
 });

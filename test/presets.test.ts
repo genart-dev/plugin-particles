@@ -2,24 +2,52 @@ import { describe, it, expect } from "vitest";
 import { ALL_PRESETS, getPreset, filterPresets, searchPresets } from "../src/presets/index.js";
 
 describe("presets", () => {
-  it("has 15 total presets", () => {
-    expect(ALL_PRESETS.length).toBe(15);
+  it("has 29 total presets", () => {
+    expect(ALL_PRESETS.length).toBe(29);
   });
 
-  it("has 4 falling presets", () => {
-    expect(filterPresets({ category: "falling" })).toHaveLength(4);
+  it("has 9 falling presets", () => {
+    expect(filterPresets({ category: "falling" })).toHaveLength(9);
   });
 
-  it("has 4 floating presets", () => {
-    expect(filterPresets({ category: "floating" })).toHaveLength(4);
+  it("has 8 floating presets", () => {
+    expect(filterPresets({ category: "floating" })).toHaveLength(8);
   });
 
-  it("has 3 scatter presets", () => {
-    expect(filterPresets({ category: "scatter" })).toHaveLength(3);
+  it("has 6 scatter presets", () => {
+    expect(filterPresets({ category: "scatter" })).toHaveLength(6);
   });
 
-  it("has 4 mist presets", () => {
-    expect(filterPresets({ category: "mist" })).toHaveLength(4);
+  it("has 6 mist presets", () => {
+    expect(filterPresets({ category: "mist" })).toHaveLength(6);
+  });
+
+  it("new falling presets exist", () => {
+    for (const id of ["embers", "ash-fall", "cherry-blossoms", "confetti", "pine-needles"]) {
+      expect(getPreset(id)).toBeDefined();
+      expect(getPreset(id)!.category).toBe("falling");
+    }
+  });
+
+  it("new floating presets exist", () => {
+    for (const id of ["dandelion-seeds", "butterflies", "bubbles", "sparkles"]) {
+      expect(getPreset(id)).toBeDefined();
+      expect(getPreset(id)!.category).toBe("floating");
+    }
+  });
+
+  it("new scatter presets exist", () => {
+    for (const id of ["shells", "acorns", "sea-foam"]) {
+      expect(getPreset(id)).toBeDefined();
+      expect(getPreset(id)!.category).toBe("scatter");
+    }
+  });
+
+  it("new mist presets exist", () => {
+    for (const id of ["ground-steam-thick", "smoke-wisps"]) {
+      expect(getPreset(id)).toBeDefined();
+      expect(getPreset(id)!.category).toBe("mist");
+    }
   });
 
   it("all presets have unique IDs", () => {

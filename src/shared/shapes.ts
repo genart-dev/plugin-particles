@@ -122,6 +122,33 @@ export const drawDust: ShapeRenderer = (ctx, x, y, size, _rot, color) => {
   ctx.fill();
 };
 
+export const drawEmber: ShapeRenderer = (ctx, x, y, size, _rot, color) => {
+  const r = size * 0.4;
+  const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
+  gradient.addColorStop(0, "#FFFFFF");
+  gradient.addColorStop(0.3, color);
+  gradient.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+};
+
+export const drawNeedle: ShapeRenderer = (ctx, x, y, size, rotation, color) => {
+  const len = size * 0.8;
+  const w = size * 0.08;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.beginPath();
+  ctx.moveTo(0, -len * 0.5);
+  ctx.lineTo(w, 0);
+  ctx.lineTo(0, len * 0.5);
+  ctx.lineTo(-w, 0);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+};
+
 // ---------------------------------------------------------------------------
 // Floating particle shapes
 // ---------------------------------------------------------------------------
@@ -189,6 +216,66 @@ export const drawSparkle: ShapeRenderer = (ctx, x, y, size, rotation, color) => 
   ctx.closePath();
   ctx.fillStyle = color;
   ctx.fill();
+  ctx.restore();
+};
+
+export const drawButterfly: ShapeRenderer = (ctx, x, y, size, rotation, color) => {
+  const r = size * 0.4;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  // Left wing
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.3, 0, r * 0.5, r * 0.3, -0.3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  // Right wing
+  ctx.beginPath();
+  ctx.ellipse(r * 0.3, 0, r * 0.5, r * 0.3, 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.08, r * 0.35, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "#333333";
+  ctx.fill();
+  ctx.restore();
+};
+
+export const drawBubble: ShapeRenderer = (ctx, x, y, size, _rot, color) => {
+  const r = size * 0.45;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(0.3, size * 0.05);
+  ctx.stroke();
+  // Highlight
+  ctx.beginPath();
+  ctx.arc(x - r * 0.25, y - r * 0.25, r * 0.15, 0, Math.PI * 2);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fill();
+};
+
+export const drawSeedTuft: ShapeRenderer = (ctx, x, y, size, rotation, color) => {
+  const r = size * 0.4;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  // Seed body
+  ctx.beginPath();
+  ctx.arc(0, r * 0.3, r * 0.15, 0, Math.PI * 2);
+  ctx.fillStyle = "#8B7355";
+  ctx.fill();
+  // Tuft filaments
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(0.3, size * 0.04);
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(angle) * r * 0.7, Math.sin(angle) * r * 0.7 - r * 0.3);
+    ctx.stroke();
+  }
   ctx.restore();
 };
 
@@ -279,6 +366,25 @@ export const drawAcorn: ShapeRenderer = (ctx, x, y, size, rotation, color) => {
   ctx.restore();
 };
 
+export const drawShell: ShapeRenderer = (ctx, x, y, size, rotation, color) => {
+  const r = size * 0.4;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  // Spiral shell body
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.6, r * 0.45, 0, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  // Inner spiral line
+  ctx.beginPath();
+  ctx.arc(r * 0.1, -r * 0.05, r * 0.25, 0.5, Math.PI * 1.5);
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.lineWidth = Math.max(0.3, size * 0.04);
+  ctx.stroke();
+  ctx.restore();
+};
+
 // ---------------------------------------------------------------------------
 // Shape lookup
 // ---------------------------------------------------------------------------
@@ -291,6 +397,8 @@ const FALLING_SHAPES: Record<string, ShapeRenderer> = {
   petal: drawPetal,
   ash: drawAsh,
   dust: drawDust,
+  ember: drawEmber,
+  needle: drawNeedle,
 };
 
 const FLOATING_SHAPES: Record<string, ShapeRenderer> = {
@@ -299,6 +407,9 @@ const FLOATING_SHAPES: Record<string, ShapeRenderer> = {
   firefly: drawFirefly,
   pollen: drawPollen,
   sparkle: drawSparkle,
+  butterfly: drawButterfly,
+  bubble: drawBubble,
+  "seed-tuft": drawSeedTuft,
 };
 
 const SCATTER_SHAPES: Record<string, ShapeRenderer> = {
@@ -308,6 +419,7 @@ const SCATTER_SHAPES: Record<string, ShapeRenderer> = {
   debris: drawDebris,
   petal: drawPetal,
   acorn: drawAcorn,
+  shell: drawShell,
 };
 
 export function getFallingShape(type: string): ShapeRenderer {

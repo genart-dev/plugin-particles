@@ -2,7 +2,7 @@
  * @genart-dev/plugin-particles — Depth-aware atmospheric particle layers
  *
  * 4 layer types (falling, floating, scatter, mist),
- * 15 presets, 8 MCP tools.
+ * 29 presets, 9 MCP tools.
  */
 
 import type { DesignPlugin, PluginContext } from "@genart-dev/core";
@@ -19,8 +19,8 @@ const particlesPlugin: DesignPlugin = {
   name: "Particles",
   version: "0.1.0",
   description:
-    "Depth-aware atmospheric particle layers: falling (snow, rain, leaves), floating (dust, fireflies), " +
-    "scatter (ground elements), and mist (fog bands). 4 layer types, 15 presets, 8 MCP tools.",
+    "Depth-aware atmospheric particle layers: falling (snow, rain, leaves, embers, confetti), floating (dust, fireflies, butterflies, bubbles), " +
+    "scatter (ground elements, shells, acorns), and mist (fog bands, steam, smoke). 4 layer types, 29 presets, 9 MCP tools.",
 
   layerTypes: [
     fallingLayerType,
@@ -67,8 +67,15 @@ export { parseHex, toHex, lerpColor, varyColor } from "./shared/color-utils.js";
 export { applyDepthEasing, computeDepth, applyDepthToParticle, sampleDepthDistribution } from "./shared/depth.js";
 export type { DepthEasing, DepthDistribution, DepthConfig } from "./shared/depth.js";
 export {
+  resolveDepthLane, depthForLane, laneSubLevelAttenuation, applyAtmosphericDepth,
+  createDepthLaneProperty, createAtmosphericModeProperty, DEPTH_LANE_OPTIONS, DEPTH_LANE_ORDER,
+} from "./shared/depth-lanes.js";
+export type { DepthLane, DepthSubLevel, DepthLaneSub, DepthLaneConfig, AtmosphericMode, SubLevelAttenuation } from "./shared/depth-lanes.js";
+export {
   drawCircle, drawSnowflake, drawRaindrop, drawLeaf, drawPetal, drawAsh, drawDust,
+  drawEmber, drawNeedle,
   drawDot, drawWisp, drawFirefly, drawPollen, drawSparkle,
-  drawStone, drawFlower, drawDebris, drawAcorn,
+  drawButterfly, drawBubble, drawSeedTuft,
+  drawStone, drawFlower, drawDebris, drawAcorn, drawShell,
   getFallingShape, getFloatingShape, getScatterShape,
 } from "./shared/shapes.js";

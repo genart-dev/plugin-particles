@@ -29,8 +29,8 @@ function getTool(name: string) {
 }
 
 describe("particles MCP tools", () => {
-  it("exports 8 tools", () => {
-    expect(particlesMcpTools).toHaveLength(8);
+  it("exports 9 tools", () => {
+    expect(particlesMcpTools).toHaveLength(9);
   });
 
   it("all tools have name, description, and handler", () => {
@@ -92,19 +92,72 @@ describe("particles MCP tools", () => {
       expect(layer.properties.color).toBe("#FF0000");
       expect(layer.properties.count).toBe(500);
     });
+
+    it("accepts depthLane and atmosphericMode overrides", async () => {
+      const ctx = createMockContext();
+      const result = await getTool("add_particles").handler({
+        preset: "snow",
+        depthLane: "background-1",
+        atmosphericMode: "western",
+      }, ctx);
+      expect(result.isError).toBeUndefined();
+      const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+      expect(layer.properties.depthLane).toBe("background-1");
+      expect(layer.properties.atmosphericMode).toBe("western");
+    });
+
+    it("adds new falling presets (embers, confetti)", async () => {
+      for (const preset of ["embers", "confetti", "cherry-blossoms", "ash-fall", "pine-needles"]) {
+        const ctx = createMockContext();
+        const result = await getTool("add_particles").handler({ preset }, ctx);
+        expect(result.isError).toBeUndefined();
+        const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+        expect(layer.type).toBe("particles:falling");
+      }
+    });
+
+    it("adds new floating presets (butterflies, bubbles)", async () => {
+      for (const preset of ["dandelion-seeds", "butterflies", "bubbles", "sparkles"]) {
+        const ctx = createMockContext();
+        const result = await getTool("add_particles").handler({ preset }, ctx);
+        expect(result.isError).toBeUndefined();
+        const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+        expect(layer.type).toBe("particles:floating");
+      }
+    });
+
+    it("adds new scatter presets (shells, acorns, sea-foam)", async () => {
+      for (const preset of ["shells", "acorns", "sea-foam"]) {
+        const ctx = createMockContext();
+        const result = await getTool("add_particles").handler({ preset }, ctx);
+        expect(result.isError).toBeUndefined();
+        const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+        expect(layer.type).toBe("particles:scatter");
+      }
+    });
+
+    it("adds new mist presets (ground-steam-thick, smoke-wisps)", async () => {
+      for (const preset of ["ground-steam-thick", "smoke-wisps"]) {
+        const ctx = createMockContext();
+        const result = await getTool("add_particles").handler({ preset }, ctx);
+        expect(result.isError).toBeUndefined();
+        const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+        expect(layer.type).toBe("particles:mist");
+      }
+    });
   });
 
   describe("list_particle_presets", () => {
     it("lists all presets when no filter", async () => {
       const ctx = createMockContext();
       const result = await getTool("list_particle_presets").handler({}, ctx);
-      expect(result.content[0]!.text).toContain("15 presets");
+      expect(result.content[0]!.text).toContain("29 presets");
     });
 
     it("filters by category", async () => {
       const ctx = createMockContext();
       const result = await getTool("list_particle_presets").handler({ category: "falling" }, ctx);
-      expect(result.content[0]!.text).toContain("4 presets");
+      expect(result.content[0]!.text).toContain("9 presets");
     });
   });
 
@@ -186,6 +239,81 @@ describe("particles MCP tools", () => {
         sizeMax: 20,
       }, ctx);
       expect(result.isError).toBeUndefined();
+    });
+  });
+
+  describe("set_depth_lane", () => {
+    it("updates depthLane on a particle layer", async () => {
+      const ctx = createMockContext();
+      await getTool("add_particles").handler({ preset: "snow" }, ctx);
+      const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+
+      const result = await getTool("set_depth_lane").handler({
+        layerId: layer.id,
+        depthLane: "background-2",
+      }, ctx);
+      expect(result.isError).toBeUndefined();
+      expect(ctx.layers.updateProperties).toHaveBeenCalled();
+    });
+
+    it("updates atmosphericMode on a particle layer", async () => {
+      const ctx = createMockContext();
+      await getTool("add_particles").handler({ preset: "fireflies" }, ctx);
+      const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+
+      const result = await getTool("set_depth_lane").handler({
+        layerId: layer.id,
+        atmosphericMode: "ink-wash",
+      }, ctx);
+      expect(result.isError).toBeUndefined();
+    });
+
+    it("updates both depthLane and atmosphericMode", async () => {
+      const ctx = createMockContext();
+      await getTool("add_particles").handler({ preset: "fallen-leaves" }, ctx);
+      const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+
+      const result = await getTool("set_depth_lane").handler({
+        layerId: layer.id,
+        depthLane: "foreground-3",
+        atmosphericMode: "western",
+      }, ctx);
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0]!.text).toContain("depthLane");
+      expect(result.content[0]!.text).toContain("atmosphericMode");
+    });
+
+    it("returns error for non-particle layer", async () => {
+      const ctx = createMockContext();
+      const fakeLayer: DesignLayer = {
+        id: "fake-456",
+        type: "terrain:sky",
+        name: "Sky",
+        visible: true,
+        locked: false,
+        opacity: 1,
+        blendMode: "normal",
+        transform: { x: 0, y: 0, width: 800, height: 600, rotation: 0, scaleX: 1, scaleY: 1, anchorX: 0, anchorY: 0 },
+        properties: {},
+      };
+      (ctx.layers.add as any)(fakeLayer);
+
+      const result = await getTool("set_depth_lane").handler({
+        layerId: "fake-456",
+        depthLane: "midground",
+      }, ctx);
+      expect(result.isError).toBe(true);
+    });
+
+    it("returns error when no changes specified", async () => {
+      const ctx = createMockContext();
+      await getTool("add_particles").handler({ preset: "snow" }, ctx);
+      const layer = (ctx.layers.add as any).mock.calls[0][0] as DesignLayer;
+
+      const result = await getTool("set_depth_lane").handler({
+        layerId: layer.id,
+      }, ctx);
+      expect(result.isError).toBe(true);
     });
   });
 

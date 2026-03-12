@@ -6,6 +6,14 @@ import type {
 } from "@genart-dev/core";
 import { createFractalNoise } from "../shared/noise.js";
 import { parseHex } from "../shared/color-utils.js";
+import {
+  createDepthLaneProperty,
+  createAtmosphericModeProperty,
+  resolveDepthLane,
+  laneSubLevelAttenuation,
+  applyAtmosphericDepth,
+} from "../shared/depth-lanes.js";
+import type { AtmosphericMode } from "../shared/depth-lanes.js";
 import { getPreset } from "../presets/index.js";
 import type { MistPreset } from "../presets/types.js";
 import { createDefaultProps } from "./shared.js";
@@ -22,6 +30,8 @@ const MIST_PROPERTIES: LayerPropertySchema[] = [
       { value: "valley-fog", label: "Valley Fog" },
       { value: "mountain-haze", label: "Mountain Haze" },
       { value: "ground-steam", label: "Ground Steam" },
+      { value: "ground-steam-thick", label: "Ground Steam (Thick)" },
+      { value: "smoke-wisps", label: "Smoke Wisps" },
     ],
   },
   { key: "seed", label: "Seed", type: "number", default: 42, min: 0, max: 99999, step: 1, group: "generation" },
@@ -37,6 +47,8 @@ const MIST_PROPERTIES: LayerPropertySchema[] = [
   { key: "driftPhase", label: "Drift Phase", type: "number", default: 0, min: 0, max: 6.28, step: 0.1, group: "motion" },
   { key: "layerCount", label: "Layer Count", type: "number", default: 3, min: 1, max: 8, step: 1, group: "depth" },
   { key: "depthSpread", label: "Depth Spread", type: "number", default: 0.2, min: 0, max: 0.5, step: 0.05, group: "depth" },
+  createDepthLaneProperty("midground"),
+  createAtmosphericModeProperty(),
 ];
 
 function resolveProps(properties: LayerProperties): {
@@ -53,6 +65,8 @@ function resolveProps(properties: LayerProperties): {
   driftPhase: number;
   layerCount: number;
   depthSpread: number;
+  depthLane: string;
+  atmosphericMode: AtmosphericMode;
 } {
   const presetId = properties.preset as string | undefined;
   const preset = presetId ? getPreset(presetId) : undefined;
@@ -72,6 +86,8 @@ function resolveProps(properties: LayerProperties): {
     driftPhase: (properties.driftPhase as number) ?? mp?.driftPhase ?? 0,
     layerCount: (properties.layerCount as number) ?? mp?.layerCount ?? 3,
     depthSpread: (properties.depthSpread as number) ?? mp?.depthSpread ?? 0.2,
+    depthLane: (properties.depthLane as string) ?? "midground",
+    atmosphericMode: (properties.atmosphericMode as AtmosphericMode) ?? "none",
   };
 }
 
@@ -97,7 +113,20 @@ export const mistLayerType: LayerTypeDefinition = {
 
     if (bandHeight <= 0) return;
 
-    const [cr, cg, cb] = parseHex(p.color);
+    // Apply atmospheric depth to mist color
+    let mistColor = p.color;
+    if (p.atmosphericMode !== "none") {
+      const laneConfig = resolveDepthLane(p.depthLane);
+      const laneDepth = laneConfig?.depth ?? 0.5;
+      mistColor = applyAtmosphericDepth(mistColor, laneDepth, p.atmosphericMode);
+    }
+
+    const [cr, cg, cb] = parseHex(mistColor);
+
+    // Lane sub-level opacity attenuation
+    const laneConfig = resolveDepthLane(p.depthLane);
+    const subAtt = laneConfig ? laneSubLevelAttenuation(laneConfig.subLevel) : null;
+    const opacityMult = subAtt?.opacity ?? 1;
 
     // Render at 1/4 resolution for performance
     const renderScale = 0.25;
@@ -114,7 +143,7 @@ export const mistLayerType: LayerTypeDefinition = {
       const layerSeed = p.seed + layer * 4231;
       const noise = createFractalNoise(layerSeed, p.noiseOctaves, 2.0, 0.5);
       const layerOffset = (layer - p.layerCount / 2) * p.depthSpread;
-      const layerOpacity = p.opacity / p.layerCount;
+      const layerOpacity = (p.opacity * opacityMult) / p.layerCount;
 
       for (let ry = 0; ry < rh; ry++) {
         const normalizedY = ry / rh;
@@ -123,10 +152,10 @@ export const mistLayerType: LayerTypeDefinition = {
         let edgeAlpha = 1;
         if (normalizedY < p.edgeSoftness) {
           const t = normalizedY / p.edgeSoftness;
-          edgeAlpha = t * t; // quadratic fade in
+          edgeAlpha = t * t;
         } else if (normalizedY > 1 - p.edgeSoftness) {
           const t = (1 - normalizedY) / p.edgeSoftness;
-          edgeAlpha = t * t; // quadratic fade out
+          edgeAlpha = t * t;
         }
 
         for (let rx = 0; rx < rw; rx++) {
@@ -143,7 +172,6 @@ export const mistLayerType: LayerTypeDefinition = {
 
             if (alpha > 0.01) {
               const idx = (ry * rw + rx) * 4;
-              // Alpha-composite with existing pixel data
               const existingA = data[idx + 3]! / 255;
               const newA = alpha * (1 - existingA);
               const totalA = existingA + newA;

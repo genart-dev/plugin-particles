@@ -68,5 +68,19 @@ describe("particles:mist", () => {
     expect(keys).toContain("edgeSoftness");
     expect(keys).toContain("noiseScale");
     expect(keys).toContain("layerCount");
+    expect(keys).toContain("depthLane");
+    expect(keys).toContain("atmosphericMode");
+  });
+
+  it("createDefault has depthLane and atmosphericMode", () => {
+    const defaults = mistLayerType.createDefault();
+    expect(defaults.depthLane).toBe("midground");
+    expect(defaults.atmosphericMode).toBe("none");
+  });
+
+  it("validates new presets (ground-steam-thick, smoke-wisps)", () => {
+    for (const id of ["ground-steam-thick", "smoke-wisps"]) {
+      expect(mistLayerType.validate({ preset: id })).toBeNull();
+    }
   });
 });

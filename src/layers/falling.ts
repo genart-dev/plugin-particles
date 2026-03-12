@@ -13,6 +13,14 @@ import {
   sampleDepthDistribution,
 } from "../shared/depth.js";
 import type { DepthEasing, DepthDistribution } from "../shared/depth.js";
+import {
+  createDepthLaneProperty,
+  createAtmosphericModeProperty,
+  resolveDepthLane,
+  laneSubLevelAttenuation,
+  applyAtmosphericDepth,
+} from "../shared/depth-lanes.js";
+import type { AtmosphericMode } from "../shared/depth-lanes.js";
 import { getFallingShape } from "../shared/shapes.js";
 import { getPreset } from "../presets/index.js";
 import type { FallingPreset } from "../presets/types.js";
@@ -30,6 +38,11 @@ const FALLING_PROPERTIES: LayerPropertySchema[] = [
       { value: "rain", label: "Rain" },
       { value: "autumn-leaves", label: "Autumn Leaves" },
       { value: "petals", label: "Cherry Blossom Petals" },
+      { value: "embers", label: "Embers" },
+      { value: "ash-fall", label: "Ash Fall" },
+      { value: "cherry-blossoms", label: "Cherry Blossoms" },
+      { value: "confetti", label: "Confetti" },
+      { value: "pine-needles", label: "Pine Needles" },
     ],
   },
   { key: "seed", label: "Seed", type: "number", default: 42, min: 0, max: 99999, step: 1, group: "generation" },
@@ -47,6 +60,8 @@ const FALLING_PROPERTIES: LayerPropertySchema[] = [
       { value: "petal", label: "Petal" },
       { value: "ash", label: "Ash" },
       { value: "dust", label: "Dust" },
+      { value: "ember", label: "Ember" },
+      { value: "needle", label: "Needle" },
     ],
   },
   { key: "count", label: "Count", type: "number", default: 200, min: 10, max: 5000, step: 10, group: "density" },
@@ -85,6 +100,8 @@ const FALLING_PROPERTIES: LayerPropertySchema[] = [
     ],
   },
   { key: "horizonY", label: "Horizon Y", type: "number", default: 0.3, min: 0, max: 1, step: 0.05, group: "depth" },
+  createDepthLaneProperty("foreground"),
+  createAtmosphericModeProperty(),
 ];
 
 function resolveProps(properties: LayerProperties): {
@@ -102,6 +119,8 @@ function resolveProps(properties: LayerProperties): {
   depthDistribution: DepthDistribution;
   depthEasing: DepthEasing;
   horizonY: number;
+  depthLane: string;
+  atmosphericMode: AtmosphericMode;
 } {
   const presetId = properties.preset as string | undefined;
   const preset = presetId ? getPreset(presetId) : undefined;
@@ -122,6 +141,8 @@ function resolveProps(properties: LayerProperties): {
     depthDistribution: (properties.depthDistribution as DepthDistribution) ?? fp?.depthDistribution ?? "uniform",
     depthEasing: (properties.depthEasing as DepthEasing) ?? fp?.depthEasing ?? "linear",
     horizonY: (properties.horizonY as number) ?? fp?.horizonY ?? 0.3,
+    depthLane: (properties.depthLane as string) ?? "foreground",
+    atmosphericMode: (properties.atmosphericMode as AtmosphericMode) ?? "none",
   };
 }
 
@@ -146,6 +167,11 @@ export const fallingLayerType: LayerTypeDefinition = {
     const windRad = (p.windAngle * Math.PI) / 180;
     const windShearX = Math.sin(windRad) * p.windStrength;
 
+    // Depth lane attenuation
+    const laneConfig = resolveDepthLane(p.depthLane);
+    const laneDepth = laneConfig?.depth ?? 0.5;
+    const subAtt = laneConfig ? laneSubLevelAttenuation(laneConfig.subLevel) : null;
+
     for (let i = 0; i < p.count; i++) {
       // Base position
       let x = rng() * width;
@@ -160,17 +186,28 @@ export const fallingLayerType: LayerTypeDefinition = {
 
       // Depth-based sizing
       const depthSample = sampleDepthDistribution(rng, p.depthDistribution);
-      const { size, opacity } = applyDepthToParticle(
+      let { size, opacity } = applyDepthToParticle(
         depthSample,
         p.sizeMin,
         p.sizeMax,
         p.opacity,
       );
 
+      // Apply lane sub-level attenuation
+      if (subAtt) {
+        size *= subAtt.sizeScale;
+        opacity *= subAtt.opacity;
+      }
+
       // Color variation
-      const color = p.colorVariation > 0
+      let color = p.colorVariation > 0
         ? varyColor(p.color, p.colorVariation, rng)
         : p.color;
+
+      // Atmospheric depth color adjustment
+      if (p.atmosphericMode !== "none") {
+        color = applyAtmosphericDepth(color, laneDepth, p.atmosphericMode);
+      }
 
       const rotation = rng() * Math.PI * 2;
 
