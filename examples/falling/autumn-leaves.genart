@@ -1,0 +1,84 @@
+{
+  "genart": "1.3",
+  "id": "particles-autumn-leaves",
+  "title": "Autumn Leaves Particles",
+  "created": "2026-03-11T00:00:00.000Z",
+  "modified": "2026-03-11T00:00:00.000Z",
+  "renderer": {
+    "type": "canvas2d"
+  },
+  "canvas": {
+    "width": 600,
+    "height": 600
+  },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(ctx, state) {}",
+  "layers": [
+    {
+      "id": "bg-layer",
+      "type": "composite:solid",
+      "name": "Background",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 600,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {
+        "color": "#1a1008"
+      }
+    },
+    {
+      "id": "particle-layer",
+      "type": "particles:falling",
+      "name": "Autumn Leaves",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 600,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {
+        "preset": "autumn-leaves",
+        "seed": 5164,
+        "particleType": "leaf",
+        "count": 60,
+        "sizeMin": 6,
+        "sizeMax": 18,
+        "color": "#C8652A",
+        "colorVariation": 0.3,
+        "opacity": 0.9,
+        "windAngle": 25,
+        "windStrength": 0.5,
+        "fallProgress": 0.5,
+        "depthDistribution": "foreground-heavy",
+        "depthEasing": "linear",
+        "horizonY": 0.3
+      }
+    }
+  ]
+}

@@ -45,38 +45,46 @@ import {
 
 ### Falling (4)
 
-| ID | Name | Description |
-|---|---|---|
-| `snow` | Snow | Gentle snowfall with depth-scaled flakes drifting in light wind |
-| `rain` | Rain | Streaking raindrops falling at a steep angle with subtle wind |
-| `autumn-leaves` | Autumn Leaves | Warm-toned leaves tumbling through the air with varied rotation |
-| `petals` | Petals | Delicate flower petals drifting slowly on a gentle breeze |
+[![Falling gallery](galleries/falling-gallery.png)](#falling-4)
+
+| Preview | ID | Name | Description |
+|---|---|---|---|
+| [![](examples/falling/snow.png)](examples/falling/snow.png) | `snow` | Snow | Gentle snowfall with depth-scaled flakes drifting in light wind |
+| [![](examples/falling/rain.png)](examples/falling/rain.png) | `rain` | Rain | Streaking raindrops falling at a steep angle with subtle wind |
+| [![](examples/falling/autumn-leaves.png)](examples/falling/autumn-leaves.png) | `autumn-leaves` | Autumn Leaves | Warm-toned leaves tumbling through the air with varied rotation |
+| [![](examples/falling/petals.png)](examples/falling/petals.png) | `petals` | Petals | Delicate flower petals drifting slowly on a gentle breeze |
 
 ### Floating (4)
 
-| ID | Name | Description |
-|---|---|---|
-| `dust-motes` | Dust Motes | Tiny dust particles catching light as they drift lazily in air |
-| `fireflies` | Fireflies | Glowing fireflies with soft radial gradient halos |
-| `fog-wisps` | Fog Wisps | Wispy translucent fog tendrils drifting through the scene |
-| `pollen` | Pollen | Fine pollen grains floating gently in warm-toned light |
+[![Floating gallery](galleries/floating-gallery.png)](#floating-4)
+
+| Preview | ID | Name | Description |
+|---|---|---|---|
+| [![](examples/floating/dust-motes.png)](examples/floating/dust-motes.png) | `dust-motes` | Dust Motes | Tiny dust particles catching light as they drift lazily in air |
+| [![](examples/floating/fireflies.png)](examples/floating/fireflies.png) | `fireflies` | Fireflies | Glowing fireflies with soft radial gradient halos |
+| [![](examples/floating/fog-wisps.png)](examples/floating/fog-wisps.png) | `fog-wisps` | Fog Wisps | Wispy translucent fog tendrils drifting through the scene |
+| [![](examples/floating/pollen.png)](examples/floating/pollen.png) | `pollen` | Pollen | Fine pollen grains floating gently in warm-toned light |
 
 ### Scatter (3)
 
-| ID | Name | Description |
-|---|---|---|
-| `fallen-leaves` | Fallen Leaves | Autumn leaves scattered on the ground with natural clustering |
-| `pebbles` | Pebbles | Small stones scattered across a ground plane with varied sizes |
-| `wildflowers` | Wildflowers | Colorful wildflowers dotting a meadow with perspective depth |
+[![Scatter gallery](galleries/scatter-gallery.png)](#scatter-3)
+
+| Preview | ID | Name | Description |
+|---|---|---|---|
+| [![](examples/scatter/fallen-leaves.png)](examples/scatter/fallen-leaves.png) | `fallen-leaves` | Fallen Leaves | Autumn leaves scattered on the ground with natural clustering |
+| [![](examples/scatter/pebbles.png)](examples/scatter/pebbles.png) | `pebbles` | Pebbles | Small stones scattered across a ground plane with varied sizes |
+| [![](examples/scatter/wildflowers.png)](examples/scatter/wildflowers.png) | `wildflowers` | Wildflowers | Colorful wildflowers dotting a meadow with perspective depth |
 
 ### Mist (4)
 
-| ID | Name | Description |
-|---|---|---|
-| `morning-mist` | Morning Mist | Soft low-lying mist with gentle noise modulation |
-| `valley-fog` | Valley Fog | Dense fog settled into a valley with layered depth bands |
-| `mountain-haze` | Mountain Haze | Atmospheric haze thinning with altitude across distant peaks |
-| `ground-steam` | Ground Steam | Rising steam wisps near the ground with high edge softness |
+[![Mist gallery](galleries/mist-gallery.png)](#mist-4)
+
+| Preview | ID | Name | Description |
+|---|---|---|---|
+| [![](examples/mist/morning-mist.png)](examples/mist/morning-mist.png) | `morning-mist` | Morning Mist | Soft low-lying mist with gentle noise modulation |
+| [![](examples/mist/valley-fog.png)](examples/mist/valley-fog.png) | `valley-fog` | Valley Fog | Dense fog settled into a valley with layered depth bands |
+| [![](examples/mist/mountain-haze.png)](examples/mist/mountain-haze.png) | `mountain-haze` | Mountain Haze | Atmospheric haze thinning with altitude across distant peaks |
+| [![](examples/mist/ground-steam.png)](examples/mist/ground-steam.png) | `ground-steam` | Ground Steam | Rising steam wisps near the ground with high edge softness |
 
 ## Shared Depth System
 
@@ -137,14 +145,16 @@ Exposed to AI agents through the MCP server when this plugin is registered:
 
 The `create_atmosphere` tool composes multi-layer scenes from curated preset combinations:
 
-| Recipe | Layers | Description |
-|---|---|---|
-| `winter-storm` | snow + fog-wisps + mountain-haze | Heavy snowfall with obscuring mist and distant haze |
-| `autumn-forest` | autumn-leaves + fallen-leaves + morning-mist | Falling and fallen leaves in a misty forest |
-| `misty-morning` | morning-mist + dust-motes | Soft low mist with sunlit dust particles |
-| `firefly-night` | fireflies + fog-wisps | Glowing fireflies drifting through night fog |
-| `spring-meadow` | petals + pollen + wildflowers | Drifting petals and pollen above a wildflower meadow |
-| `dusty-ruins` | dust-motes + pebbles + ground-steam | Dust and steam rising among scattered rubble |
+[![Atmosphere gallery](galleries/atmosphere-gallery.png)](#atmosphere-recipes-6)
+
+| Preview | Recipe | Layers | Description |
+|---|---|---|---|
+| [![](examples/atmosphere/winter-storm.png)](examples/atmosphere/winter-storm.png) | `winter-storm` | snow + fog-wisps + mountain-haze | Heavy snowfall with obscuring mist and distant haze |
+| [![](examples/atmosphere/autumn-forest.png)](examples/atmosphere/autumn-forest.png) | `autumn-forest` | autumn-leaves + fallen-leaves + morning-mist | Falling and fallen leaves in a misty forest |
+| [![](examples/atmosphere/misty-morning.png)](examples/atmosphere/misty-morning.png) | `misty-morning` | morning-mist + dust-motes | Soft low mist with sunlit dust particles |
+| [![](examples/atmosphere/firefly-night.png)](examples/atmosphere/firefly-night.png) | `firefly-night` | fireflies + fog-wisps | Glowing fireflies drifting through night fog |
+| [![](examples/atmosphere/spring-meadow.png)](examples/atmosphere/spring-meadow.png) | `spring-meadow` | petals + pollen + wildflowers | Drifting petals and pollen above a wildflower meadow |
+| [![](examples/atmosphere/dusty-ruins.png)](examples/atmosphere/dusty-ruins.png) | `dusty-ruins` | dust-motes + pebbles + ground-steam | Dust and steam rising among scattered rubble |
 
 ## Rendering
 
@@ -187,6 +197,23 @@ const results = searchPresets("fire"); // fireflies
 const preset = getPreset("snow");
 ```
 
+## Examples
+
+The `examples/` directory contains 21 `.genart` files (15 individual presets + 6 atmosphere recipes) with rendered PNG thumbnails.
+
+```bash
+# Generate .genart example files
+node generate-examples.cjs
+
+# Render all examples to PNG (requires @genart-dev/cli)
+node render-examples.cjs
+
+# Generate per-category gallery montages
+bash generate-galleries.sh
+```
+
+A workspace file at `examples/particles-gallery.genart-workspace` lays out all examples in a grid for browsing in the desktop app.
+
 ## Related Packages
 
 | Package | Purpose |
@@ -197,6 +224,7 @@ const preset = getPreset("snow");
 | [`@genart-dev/plugin-painting`](https://github.com/genart-dev/plugin-painting) | Vector-field-driven painting layers |
 | [`@genart-dev/plugin-perspective`](https://github.com/genart-dev/plugin-perspective) | Perspective grids and depth guides |
 | [`@genart-dev/plugin-plants`](https://github.com/genart-dev/plugin-plants) | Algorithmic plant generation (110 presets) |
+| [`@genart-dev/plugin-patterns`](https://github.com/genart-dev/plugin-patterns) | Geometric and cultural pattern fills (153 presets) |
 
 ## Support
 
