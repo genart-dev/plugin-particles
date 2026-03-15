@@ -37,6 +37,7 @@ const MIST_PROPERTIES: LayerPropertySchema[] = [
   { key: "seed", label: "Seed", type: "number", default: 42, min: 0, max: 99999, step: 1, group: "generation" },
   { key: "density", label: "Density", type: "number", default: 0.4, min: 0, max: 1, step: 0.05, group: "shape" },
   { key: "color", label: "Color", type: "color", default: "#E8E8F0", group: "style" },
+  { key: "colorBottom", label: "Color Bottom", type: "color", default: "", group: "style" },
   { key: "opacity", label: "Opacity", type: "number", default: 0.35, min: 0, max: 1, step: 0.05, group: "style" },
   { key: "bandTop", label: "Band Top", type: "number", default: 0.5, min: 0, max: 1, step: 0.05, group: "layout" },
   { key: "bandBottom", label: "Band Bottom", type: "number", default: 0.8, min: 0, max: 1, step: 0.05, group: "layout" },
@@ -44,6 +45,7 @@ const MIST_PROPERTIES: LayerPropertySchema[] = [
   { key: "noiseScale", label: "Noise Scale", type: "number", default: 3.0, min: 0.5, max: 10, step: 0.5, group: "shape" },
   { key: "noiseOctaves", label: "Noise Octaves", type: "number", default: 3, min: 1, max: 6, step: 1, group: "shape" },
   { key: "driftX", label: "Drift X", type: "number", default: 0.1, min: 0, max: 1, step: 0.05, group: "motion" },
+  { key: "driftY", label: "Drift Y", type: "number", default: 0, min: -1, max: 1, step: 0.05, group: "motion" },
   { key: "driftPhase", label: "Drift Phase", type: "number", default: 0, min: 0, max: 6.28, step: 0.1, group: "motion" },
   { key: "layerCount", label: "Layer Count", type: "number", default: 3, min: 1, max: 8, step: 1, group: "depth" },
   { key: "depthSpread", label: "Depth Spread", type: "number", default: 0.2, min: 0, max: 0.5, step: 0.05, group: "depth" },
@@ -55,6 +57,7 @@ function resolveProps(properties: LayerProperties): {
   seed: number;
   density: number;
   color: string;
+  colorBottom: string;
   opacity: number;
   bandTop: number;
   bandBottom: number;
@@ -62,6 +65,7 @@ function resolveProps(properties: LayerProperties): {
   noiseScale: number;
   noiseOctaves: number;
   driftX: number;
+  driftY: number;
   driftPhase: number;
   layerCount: number;
   depthSpread: number;
@@ -72,10 +76,12 @@ function resolveProps(properties: LayerProperties): {
   const preset = presetId ? getPreset(presetId) : undefined;
   const mp = preset?.category === "mist" ? (preset as MistPreset) : undefined;
 
+  const topColor = (properties.color as string) || mp?.color || "#E8E8F0";
   return {
     seed: (properties.seed as number) ?? 42,
     density: (properties.density as number) ?? mp?.density ?? 0.4,
-    color: (properties.color as string) || mp?.color || "#E8E8F0",
+    color: topColor,
+    colorBottom: (properties.colorBottom as string) || mp?.colorBottom || topColor,
     opacity: (properties.opacity as number) ?? mp?.opacity ?? 0.35,
     bandTop: (properties.bandTop as number) ?? mp?.bandTop ?? 0.5,
     bandBottom: (properties.bandBottom as number) ?? mp?.bandBottom ?? 0.8,
@@ -83,6 +89,7 @@ function resolveProps(properties: LayerProperties): {
     noiseScale: (properties.noiseScale as number) ?? mp?.noiseScale ?? 3.0,
     noiseOctaves: (properties.noiseOctaves as number) ?? mp?.noiseOctaves ?? 3,
     driftX: (properties.driftX as number) ?? mp?.driftX ?? 0.1,
+    driftY: (properties.driftY as number) ?? mp?.driftY ?? 0,
     driftPhase: (properties.driftPhase as number) ?? mp?.driftPhase ?? 0,
     layerCount: (properties.layerCount as number) ?? mp?.layerCount ?? 3,
     depthSpread: (properties.depthSpread as number) ?? mp?.depthSpread ?? 0.2,
@@ -121,7 +128,15 @@ export const mistLayerType: LayerTypeDefinition = {
       mistColor = applyAtmosphericDepth(mistColor, laneDepth, p.atmosphericMode);
     }
 
-    const [cr, cg, cb] = parseHex(mistColor);
+    const [topR, topG, topB] = parseHex(mistColor);
+    // colorBottom: apply same atmospheric depth as top color
+    let bottomColor = p.colorBottom;
+    if (p.atmosphericMode !== "none" && bottomColor !== mistColor) {
+      const laneConfig2 = resolveDepthLane(p.depthLane);
+      const laneDepth2 = laneConfig2?.depth ?? 0.5;
+      bottomColor = applyAtmosphericDepth(bottomColor, laneDepth2, p.atmosphericMode);
+    }
+    const [botR, botG, botB] = parseHex(bottomColor);
 
     // Lane sub-level opacity attenuation
     const laneConfig = resolveDepthLane(p.depthLane);
@@ -145,10 +160,18 @@ export const mistLayerType: LayerTypeDefinition = {
       const layerOffset = (layer - p.layerCount / 2) * p.depthSpread;
       const layerOpacity = (p.opacity * opacityMult) / p.layerCount;
 
+      // Bug 8 fix: vary noise scale per layer so layers have distinct feature sizes
+      // even when depthSpread is small. Front layers (0) are finer, back layers are coarser.
+      const layerT = p.layerCount > 1 ? layer / (p.layerCount - 1) : 0.5;
+      const effectiveNoiseScale = p.noiseScale * (0.85 + layerT * 0.3);
+
+      // driftY: per-layer vertical offset in noise space (front layers drift more = parallax)
+      const driftYOffset = p.driftY * (1 - layerT * 0.5) * 1.5;
+
       for (let ry = 0; ry < rh; ry++) {
         const normalizedY = ry / rh;
 
-        // Smoothstep edge falloff (smoother than t*t at low edgeSoftness)
+        // Smoothstep edge falloff
         let edgeAlpha = 1;
         if (normalizedY < p.edgeSoftness) {
           const t = normalizedY / p.edgeSoftness;
@@ -158,11 +181,16 @@ export const mistLayerType: LayerTypeDefinition = {
           edgeAlpha = t * t * (3 - 2 * t);
         }
 
+        // Vertical color gradient (colorBottom blends in toward band bottom)
+        const gr = Math.round(topR + (botR - topR) * normalizedY);
+        const gg = Math.round(topG + (botG - topG) * normalizedY);
+        const gb = Math.round(topB + (botB - topB) * normalizedY);
+
         for (let rx = 0; rx < rw; rx++) {
           const normalizedX = rx / rw;
 
-          const nx = (normalizedX + p.driftX * Math.sin(p.driftPhase + layer) + layerOffset) * p.noiseScale;
-          const ny = normalizedY * p.noiseScale + layer * 5;
+          const nx = (normalizedX + p.driftX * Math.sin(p.driftPhase + layer) + layerOffset) * effectiveNoiseScale;
+          const ny = (normalizedY + driftYOffset) * effectiveNoiseScale + layer * 5;
 
           const n = noise(nx, ny);
 
@@ -177,9 +205,9 @@ export const mistLayerType: LayerTypeDefinition = {
               const totalA = existingA + newA;
 
               if (totalA > 0) {
-                data[idx] = Math.round((data[idx]! * existingA + cr * newA) / totalA);
-                data[idx + 1] = Math.round((data[idx + 1]! * existingA + cg * newA) / totalA);
-                data[idx + 2] = Math.round((data[idx + 2]! * existingA + cb * newA) / totalA);
+                data[idx] = Math.round((data[idx]! * existingA + gr * newA) / totalA);
+                data[idx + 1] = Math.round((data[idx + 1]! * existingA + gg * newA) / totalA);
+                data[idx + 2] = Math.round((data[idx + 2]! * existingA + gb * newA) / totalA);
                 data[idx + 3] = Math.round(totalA * 255);
               }
             }

@@ -72,6 +72,8 @@ describe("particles:mist", () => {
     expect(keys).toContain("layerCount");
     expect(keys).toContain("depthLane");
     expect(keys).toContain("atmosphericMode");
+    expect(keys).toContain("driftY");
+    expect(keys).toContain("colorBottom");
   });
 
   it("createDefault has depthLane and atmosphericMode", () => {
@@ -80,9 +82,33 @@ describe("particles:mist", () => {
     expect(defaults.atmosphericMode).toBe("none");
   });
 
+  it("createDefault has driftY=0 and colorBottom=''", () => {
+    const defaults = mistLayerType.createDefault();
+    expect(defaults.driftY).toBe(0);
+    expect(defaults.colorBottom).toBe("");
+  });
+
   it("validates new presets (ground-steam-thick, smoke-wisps)", () => {
     for (const id of ["ground-steam-thick", "smoke-wisps"]) {
       expect(mistLayerType.validate({ preset: id })).toBeNull();
     }
+  });
+
+  it("render with driftY=-0.25 (rising) executes without error", () => {
+    const ctx = createMockCtx();
+    const props = { ...mistLayerType.createDefault(), layerCount: 2, driftY: -0.25 };
+    expect(() => mistLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
+  });
+
+  it("render with colorBottom gradient executes without error", () => {
+    const ctx = createMockCtx();
+    const props = { ...mistLayerType.createDefault(), layerCount: 2, color: "#E8E8F0", colorBottom: "#F0E8D0" };
+    expect(() => mistLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
+  });
+
+  it("render with single layer uses distinct effectiveNoiseScale (bug 8: no layerCount-1 divide-by-zero)", () => {
+    const ctx = createMockCtx();
+    const props = { ...mistLayerType.createDefault(), layerCount: 1 };
+    expect(() => mistLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
   });
 });

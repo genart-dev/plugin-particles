@@ -72,7 +72,9 @@ const FALLING_PROPERTIES: LayerPropertySchema[] = [
   { key: "opacity", label: "Opacity", type: "number", default: 0.8, min: 0, max: 1, step: 0.05, group: "style" },
   { key: "windAngle", label: "Wind Angle", type: "number", default: 15, min: -90, max: 90, step: 5, group: "motion" },
   { key: "windStrength", label: "Wind Strength", type: "number", default: 0.3, min: 0, max: 1, step: 0.05, group: "motion" },
+  { key: "windTurbulence", label: "Wind Turbulence", type: "number", default: 0, min: 0, max: 1, step: 0.05, group: "motion" },
   { key: "fallProgress", label: "Fall Progress", type: "number", default: 0.7, min: 0, max: 1, step: 0.05, group: "motion" },
+  { key: "fallSpreadY", label: "Fall Spread Y", type: "number", default: 0, min: 0, max: 1, step: 0.05, group: "motion" },
   {
     key: "depthDistribution",
     label: "Depth Distribution",
@@ -115,7 +117,9 @@ function resolveProps(properties: LayerProperties): {
   opacity: number;
   windAngle: number;
   windStrength: number;
+  windTurbulence: number;
   fallProgress: number;
+  fallSpreadY: number;
   depthDistribution: DepthDistribution;
   depthEasing: DepthEasing;
   horizonY: number;
@@ -137,7 +141,9 @@ function resolveProps(properties: LayerProperties): {
     opacity: (properties.opacity as number) ?? fp?.opacity ?? 0.8,
     windAngle: (properties.windAngle as number) ?? fp?.windAngle ?? 15,
     windStrength: (properties.windStrength as number) ?? fp?.windStrength ?? 0.3,
+    windTurbulence: (properties.windTurbulence as number) ?? fp?.windTurbulence ?? 0,
     fallProgress: (properties.fallProgress as number) ?? fp?.fallProgress ?? 0.7,
+    fallSpreadY: (properties.fallSpreadY as number) ?? fp?.fallSpreadY ?? 0,
     depthDistribution: (properties.depthDistribution as DepthDistribution) ?? fp?.depthDistribution ?? "uniform",
     depthEasing: (properties.depthEasing as DepthEasing) ?? fp?.depthEasing ?? "linear",
     horizonY: (properties.horizonY as number) ?? fp?.horizonY ?? 0.3,
@@ -165,17 +171,27 @@ export const fallingLayerType: LayerTypeDefinition = {
     const drawShape = getFallingShape(p.particleType);
 
     const windRad = (p.windAngle * Math.PI) / 180;
-    const windShearX = Math.sin(windRad) * p.windStrength;
 
     // Depth lane attenuation
     const laneConfig = resolveDepthLane(p.depthLane);
     const laneDepth = laneConfig?.depth ?? 0.5;
     const subAtt = laneConfig ? laneSubLevelAttenuation(laneConfig.subLevel) : null;
 
+    // fallSpreadY: 0 = particles only from y=0 to fallProgress*height,
+    //              1 = particles distributed across full canvas height
+    const yScaleFactor = p.fallProgress + (1 - p.fallProgress) * p.fallSpreadY;
+
     for (let i = 0; i < p.count; i++) {
       // Base position
       let x = rng() * width;
-      let y = rng() * height * p.fallProgress;
+      let y = rng() * height * yScaleFactor;
+
+      // windTurbulence: per-particle noise in wind angle (only consumes RNG when non-zero)
+      let particleWindRad = windRad;
+      if (p.windTurbulence > 0) {
+        particleWindRad += (rng() - 0.5) * Math.PI * p.windTurbulence;
+      }
+      const windShearX = Math.sin(particleWindRad) * p.windStrength;
 
       // Wind displacement
       const normalizedY = y / height;

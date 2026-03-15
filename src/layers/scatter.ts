@@ -148,10 +148,11 @@ function sampleDistribution(
     case "uniform":
       break;
     case "clustered": {
+      // Bug 4 fix: cluster only biases x (horizontal grouping), not y (depth).
+      // Biasing y would pile elements at identical depths, which looks wrong.
       if (clusterCenters.length > 0 && clusterStrength > 0) {
         const center = clusterCenters[Math.floor(rng() * clusterCenters.length)]!;
         x = x * (1 - clusterStrength) + center.x * clusterStrength + (rng() - 0.5) * 0.2;
-        y = y * (1 - clusterStrength) + center.y * clusterStrength + (rng() - 0.5) * 0.2;
       }
       break;
     }
@@ -201,6 +202,20 @@ export const scatterLayerType: LayerTypeDefinition = {
     const laneDepth = laneConfig?.depth ?? 0.5;
     const subAtt = laneConfig ? laneSubLevelAttenuation(laneConfig.subLevel) : null;
 
+    // Generate all particles first (preserves deterministic rng order),
+    // then sort back-to-front so foreground elements overdraw background ones.
+    interface ScatterParticle {
+      x: number;
+      normalizedY: number;
+      size: number;
+      opacity: number;
+      color: string;
+      rotation: number;
+      shapeSeed: number;
+    }
+
+    const particles: ScatterParticle[] = [];
+
     for (let i = 0; i < p.count; i++) {
       const { x: nx, y: ny } = sampleDistribution(
         rng,
@@ -211,7 +226,6 @@ export const scatterLayerType: LayerTypeDefinition = {
 
       const x = nx * width;
       const normalizedY = p.groundY + ny * groundZone;
-      const y = normalizedY * height;
 
       const depth = computeDepth(normalizedY, {
         horizonY: p.horizonY,
@@ -221,7 +235,6 @@ export const scatterLayerType: LayerTypeDefinition = {
 
       let { size, opacity } = applyDepthToParticle(depth, p.sizeMin, p.sizeMax, 1);
 
-      // Apply lane sub-level attenuation
       if (subAtt) {
         size *= subAtt.sizeScale;
         opacity *= subAtt.opacity;
@@ -231,15 +244,24 @@ export const scatterLayerType: LayerTypeDefinition = {
         ? varyColor(p.color, p.colorVariation, rng)
         : p.color;
 
-      // Atmospheric depth color adjustment
       if (p.atmosphericMode !== "none") {
         color = applyAtmosphericDepth(color, laneDepth, p.atmosphericMode);
       }
 
       const rotation = (rng() - 0.5) * p.rotationRange;
+      // Capture a per-particle seed for shape-internal rng so draw order doesn't affect appearance
+      const shapeSeed = Math.floor(rng() * 0x100000000);
 
-      ctx.globalAlpha = opacity;
-      drawShape(ctx, bx + x, by + y, size, rotation, color, rng);
+      particles.push({ x, normalizedY, size, opacity, color, rotation, shapeSeed });
+    }
+
+    // Sort back-to-front: smaller normalizedY = closer to horizon = drawn first
+    particles.sort((a, b) => a.normalizedY - b.normalizedY);
+
+    for (const part of particles) {
+      const shapeRng = mulberry32(part.shapeSeed);
+      ctx.globalAlpha = part.opacity;
+      drawShape(ctx, bx + part.x, by + part.normalizedY * height, part.size, part.rotation, part.color, shapeRng);
     }
 
     ctx.globalAlpha = 1;

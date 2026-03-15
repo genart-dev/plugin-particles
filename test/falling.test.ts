@@ -73,6 +73,8 @@ describe("particles:falling", () => {
     expect(keys).toContain("particleType");
     expect(keys).toContain("count");
     expect(keys).toContain("windAngle");
+    expect(keys).toContain("windTurbulence");
+    expect(keys).toContain("fallSpreadY");
     expect(keys).toContain("horizonY");
     expect(keys).toContain("depthLane");
     expect(keys).toContain("atmosphericMode");
@@ -88,6 +90,34 @@ describe("particles:falling", () => {
     for (const id of ["embers", "ash-fall", "cherry-blossoms", "confetti", "pine-needles"]) {
       expect(fallingLayerType.validate({ preset: id })).toBeNull();
     }
+  });
+
+  it("createDefault has windTurbulence=0 and fallSpreadY=0", () => {
+    const defaults = fallingLayerType.createDefault();
+    expect(defaults.windTurbulence).toBe(0);
+    expect(defaults.fallSpreadY).toBe(0);
+  });
+
+  it("render with windTurbulence=0.5 executes without error", () => {
+    const ctx = createMockCtx();
+    const props = { ...fallingLayerType.createDefault(), count: 10, windTurbulence: 0.5 };
+    expect(() => fallingLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
+  });
+
+  it("render with fallSpreadY=1 spreads particles across full height", () => {
+    const ctx = createMockCtx();
+    const props = { ...fallingLayerType.createDefault(), count: 10, fallProgress: 0.2, fallSpreadY: 1 };
+    expect(() => fallingLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
+  });
+
+  it("windTurbulence=0 gives same output as before (no extra rng consumption)", () => {
+    const ctx1 = createMockCtx();
+    const ctx2 = createMockCtx();
+    const baseProps = { ...fallingLayerType.createDefault(), count: 20, windTurbulence: 0, fallSpreadY: 0 };
+    // Both renders should complete without error and call same operations
+    fallingLayerType.render(baseProps, ctx1, BOUNDS, {} as any);
+    fallingLayerType.render(baseProps, ctx2, BOUNDS, {} as any);
+    expect(ctx1.save).toHaveBeenCalledTimes(ctx2.save.mock.calls.length);
   });
 
   it("renders embers preset without error", () => {

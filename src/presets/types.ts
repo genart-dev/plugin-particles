@@ -20,7 +20,9 @@ export interface FallingPreset extends BasePreset {
   opacity: number;
   windAngle: number;
   windStrength: number;
+  windTurbulence?: number;
   fallProgress: number;
+  fallSpreadY?: number;
   depthDistribution: DepthDistribution;
   depthEasing: DepthEasing;
   horizonY: number;
@@ -67,6 +69,7 @@ export interface MistPreset extends BasePreset {
   category: "mist";
   density: number;
   color: string;
+  colorBottom?: string;
   opacity: number;
   bandTop: number;
   bandBottom: number;
@@ -74,6 +77,7 @@ export interface MistPreset extends BasePreset {
   noiseScale: number;
   noiseOctaves: number;
   driftX: number;
+  driftY?: number;
   driftPhase: number;
   layerCount: number;
   depthSpread: number;
