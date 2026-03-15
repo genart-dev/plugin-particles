@@ -129,7 +129,9 @@ export const drawEmber: ShapeRenderer = (ctx, x, y, size, _rot, color) => {
   gradient.addColorStop(0.3, color);
   gradient.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = gradient;
-  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
 };
 
 export const drawNeedle: ShapeRenderer = (ctx, x, y, size, rotation, color) => {

@@ -5,6 +5,7 @@ import type {
   ValidationError,
 } from "@genart-dev/core";
 import { mulberry32 } from "../shared/prng.js";
+import { createFractalNoise } from "../shared/noise.js";
 import { applyDepthToParticle } from "../shared/depth.js";
 import { parseHex } from "../shared/color-utils.js";
 import type { DepthEasing } from "../shared/depth.js";
@@ -64,8 +65,10 @@ const FLOATING_PROPERTIES: LayerPropertySchema[] = [
   { key: "opacity", label: "Opacity", type: "number", default: 0.4, min: 0, max: 1, step: 0.05, group: "style" },
   { key: "glow", label: "Glow", type: "boolean", default: false, group: "style" },
   { key: "glowColor", label: "Glow Color", type: "color", default: "#FFFFFF", group: "style" },
+  { key: "glowRadius", label: "Glow Radius", type: "number", default: 3, min: 1, max: 10, step: 0.5, group: "style" },
   { key: "driftRange", label: "Drift Range", type: "number", default: 5, min: 0, max: 50, step: 1, group: "motion" },
   { key: "driftPhase", label: "Drift Phase", type: "number", default: 0, min: 0, max: 6.28, step: 0.1, group: "motion" },
+  { key: "verticalBias", label: "Vertical Bias", type: "number", default: 0, min: -1, max: 1, step: 0.1, group: "motion" },
   { key: "depthBandMin", label: "Depth Band Min", type: "number", default: 0.2, min: 0, max: 1, step: 0.05, group: "depth" },
   { key: "depthBandMax", label: "Depth Band Max", type: "number", default: 0.8, min: 0, max: 1, step: 0.05, group: "depth" },
   {
@@ -96,8 +99,10 @@ function resolveProps(properties: LayerProperties): {
   opacity: number;
   glow: boolean;
   glowColor: string;
+  glowRadius: number;
   driftRange: number;
   driftPhase: number;
+  verticalBias: number;
   depthBandMin: number;
   depthBandMax: number;
   depthEasing: DepthEasing;
@@ -119,8 +124,10 @@ function resolveProps(properties: LayerProperties): {
     opacity: (properties.opacity as number) ?? fp?.opacity ?? 0.4,
     glow: (properties.glow as boolean) ?? fp?.glow ?? false,
     glowColor: (properties.glowColor as string) || fp?.glowColor || "#FFFFFF",
+    glowRadius: (properties.glowRadius as number) ?? fp?.glowRadius ?? 3,
     driftRange: (properties.driftRange as number) ?? fp?.driftRange ?? 5,
     driftPhase: (properties.driftPhase as number) ?? fp?.driftPhase ?? 0,
+    verticalBias: (properties.verticalBias as number) ?? fp?.verticalBias ?? 0,
     depthBandMin: (properties.depthBandMin as number) ?? fp?.depthBandMin ?? 0.2,
     depthBandMax: (properties.depthBandMax as number) ?? fp?.depthBandMax ?? 0.8,
     depthEasing: (properties.depthEasing as DepthEasing) ?? fp?.depthEasing ?? "linear",
@@ -155,16 +162,28 @@ export const floatingLayerType: LayerTypeDefinition = {
     const laneDepth = laneConfig?.depth ?? 0.5;
     const subAtt = laneConfig ? laneSubLevelAttenuation(laneConfig.subLevel) : null;
 
+    // Per-axis fractal noise for organic drift (eliminates grid sync artifacts)
+    const xNoise = createFractalNoise(p.seed + 1000, 3);
+    const yNoise = createFractalNoise(p.seed + 2000, 3);
+
+    // verticalBias power curve: -1 (rising) → power=3 pushes toward top, +1 (settling) → power=0.33 pushes toward bottom
+    const vBiasPower = p.verticalBias <= 0
+      ? 1 + (-p.verticalBias) * 2
+      : 1 / (1 + p.verticalBias * 2);
+
     for (let i = 0; i < p.count; i++) {
-      // Position within depth band
-      const depthT = rng(); // 0-1 within band
+      // Position within depth band — apply verticalBias via power curve on depthT
+      const rawT = rng(); // 0-1 within band
+      const depthT = vBiasPower === 1 ? rawT : Math.pow(rawT, vBiasPower);
       const normalizedY = p.depthBandMin + depthT * bandHeight;
       const baseX = rng() * width;
       const baseY = normalizedY * height;
 
-      // Sinusoidal drift displacement
-      const driftX = Math.sin(p.driftPhase + i * 1.7) * p.driftRange;
-      const driftY = Math.cos(p.driftPhase + i * 2.3) * p.driftRange * 0.5;
+      // Noise-based drift displacement — each particle samples a unique position in the noise field
+      const noiseX = xNoise(i * 0.15, p.driftPhase * 0.3) * 2 - 1; // -1..1
+      const noiseY = yNoise(i * 0.15 + 50, p.driftPhase * 0.3) * 2 - 1;
+      const driftX = noiseX * p.driftRange;
+      const driftY = noiseY * p.driftRange * 0.5;
 
       const x = baseX + driftX;
       const y = baseY + driftY;
@@ -193,7 +212,7 @@ export const floatingLayerType: LayerTypeDefinition = {
 
       // Glow halo — drawn before shape so shape renders on top
       if (p.glow) {
-        const glowR = size * 3;
+        const glowR = size * p.glowRadius;
         const [gr, gg, gb] = parseHex(p.glowColor);
         const grad = ctx.createRadialGradient(bx + x, by + y, 0, bx + x, by + y, glowR);
         grad.addColorStop(0, `rgba(${gr},${gg},${gb},0.6)`);

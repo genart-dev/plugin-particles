@@ -39,8 +39,10 @@ export interface FloatingPreset extends BasePreset {
   opacity: number;
   glow: boolean;
   glowColor: string;
+  glowRadius?: number;
   driftRange: number;
   driftPhase: number;
+  verticalBias?: number;
   depthBandMin: number;
   depthBandMax: number;
   depthEasing: DepthEasing;
