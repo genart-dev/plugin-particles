@@ -1,6 +1,6 @@
 {
   "name": "@genart-dev/plugin-particles",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Depth-aware atmospheric particle layers for genart.dev — falling, floating, scatter, and mist effects",
   "type": "module",
   "main": "./dist/index.cjs",

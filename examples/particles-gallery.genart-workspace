@@ -30,6 +30,12 @@
     { "file": "atmosphere/misty-morning.genart", "position": { "x": 1400, "y": 3150 } },
     { "file": "atmosphere/firefly-night.genart", "position": { "x": 2100, "y": 3150 } },
     { "file": "atmosphere/spring-meadow.genart", "position": { "x": 2800, "y": 3150 } },
-    { "file": "atmosphere/dusty-ruins.genart", "position": { "x": 3500, "y": 3150 } }
+    { "file": "atmosphere/dusty-ruins.genart", "position": { "x": 3500, "y": 3150 } },
+
+    { "file": "trailing/meteor-shower.genart", "position": { "x": 0, "y": 4200 } },
+    { "file": "trailing/speed-rain.genart", "position": { "x": 700, "y": 4200 } },
+    { "file": "trailing/shooting-stars.genart", "position": { "x": 1400, "y": 4200 } },
+    { "file": "trailing/light-trails.genart", "position": { "x": 2100, "y": 4200 } },
+    { "file": "trailing/rising-sparks.genart", "position": { "x": 2800, "y": 4200 } }
   ]
 }

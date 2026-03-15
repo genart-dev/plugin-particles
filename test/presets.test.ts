@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { ALL_PRESETS, getPreset, filterPresets, searchPresets } from "../src/presets/index.js";
 
 describe("presets", () => {
-  it("has 29 total presets", () => {
-    expect(ALL_PRESETS.length).toBe(29);
+  it("has 34 total presets", () => {
+    expect(ALL_PRESETS.length).toBe(34);
   });
 
   it("has 9 falling presets", () => {
@@ -50,6 +50,17 @@ describe("presets", () => {
     }
   });
 
+  it("has 5 trailing presets", () => {
+    expect(filterPresets({ category: "trailing" })).toHaveLength(5);
+  });
+
+  it("trailing presets exist", () => {
+    for (const id of ["meteor-shower", "speed-rain", "shooting-stars", "light-trails", "rising-sparks"]) {
+      expect(getPreset(id)).toBeDefined();
+      expect(getPreset(id)!.category).toBe("trailing");
+    }
+  });
+
   it("all presets have unique IDs", () => {
     const ids = ALL_PRESETS.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -61,7 +72,7 @@ describe("presets", () => {
       expect(p.name).toBeTruthy();
       expect(p.description).toBeTruthy();
       expect(p.tags.length).toBeGreaterThan(0);
-      expect(["falling", "floating", "scatter", "mist"]).toContain(p.category);
+      expect(["falling", "floating", "scatter", "mist", "trailing"]).toContain(p.category);
     }
   });
 

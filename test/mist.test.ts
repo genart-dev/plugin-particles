@@ -12,6 +12,7 @@ function createMockCtx() {
       width: w,
       height: h,
     })),
+    putImageData: vi.fn(),
     drawImage: vi.fn(),
     fillStyle: "",
     globalAlpha: 1,
@@ -36,19 +37,20 @@ describe("particles:mist", () => {
     expect(defaults.layerCount).toBe(3);
   });
 
-  it("render executes without error", () => {
-    if (typeof OffscreenCanvas === "undefined") return; // Skip in non-browser environments
+  it("render executes without error (Node-compatible, no OffscreenCanvas needed)", () => {
     const ctx = createMockCtx();
     const props = { ...mistLayerType.createDefault(), layerCount: 1 };
     expect(() => mistLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
   });
 
-  it("render creates ImageData for buffer rendering", () => {
-    if (typeof OffscreenCanvas === "undefined") return; // Skip in non-browser environments
+  it("render uses createImageData and putImageData — no OffscreenCanvas dependency", () => {
     const ctx = createMockCtx();
     const props = { ...mistLayerType.createDefault(), layerCount: 1 };
     mistLayerType.render(props, ctx, BOUNDS, {} as any);
-    expect(ctx.createImageData).toHaveBeenCalled();
+    // Two createImageData calls: one for the 1/4-res buffer, one for the full-size upscale
+    expect(ctx.createImageData).toHaveBeenCalledTimes(2);
+    expect(ctx.putImageData).toHaveBeenCalledTimes(1);
+    expect(ctx.drawImage).not.toHaveBeenCalled();
   });
 
   it("validate passes for valid preset", () => {

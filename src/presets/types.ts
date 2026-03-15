@@ -79,7 +79,26 @@ export interface MistPreset extends BasePreset {
   depthSpread: number;
 }
 
-/** Discriminated union of all particle presets. */
-export type ParticlePreset = FallingPreset | FloatingPreset | ScatterPreset | MistPreset;
+/** Trailing streak/comet particle preset (meteors, speed rain, light trails). */
+export interface TrailingPreset extends BasePreset {
+  category: "trailing";
+  count: number;
+  sizeMin: number;
+  sizeMax: number;
+  trailLength: number;
+  motionAngle: number;
+  motionVariation: number;
+  color: string;
+  colorVariation: number;
+  opacity: number;
+  glow: boolean;
+  glowColor: string;
+  depthDistribution: DepthDistribution;
+  depthEasing: DepthEasing;
+  horizonY: number;
+}
 
-export type PresetCategory = "falling" | "floating" | "scatter" | "mist";
+/** Discriminated union of all particle presets. */
+export type ParticlePreset = FallingPreset | FloatingPreset | ScatterPreset | MistPreset | TrailingPreset;
+
+export type PresetCategory = "falling" | "floating" | "scatter" | "mist" | "trailing";

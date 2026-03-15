@@ -86,4 +86,18 @@ describe("particles:floating", () => {
     const props = { ...floatingLayerType.createDefault(), preset: "butterflies", particleType: "butterfly", count: 5 };
     expect(() => floatingLayerType.render(props, ctx, BOUNDS, {} as any)).not.toThrow();
   });
+
+  it("renders glow overlay when glow:true — createRadialGradient called", () => {
+    const ctx = createMockCtx();
+    const props = { ...floatingLayerType.createDefault(), count: 3, glow: true, glowColor: "#FFEE44", particleType: "dot" };
+    floatingLayerType.render(props, ctx, BOUNDS, {} as any);
+    expect(ctx.createRadialGradient).toHaveBeenCalled();
+  });
+
+  it("does not call createRadialGradient when glow:false and particleType is dot", () => {
+    const ctx = createMockCtx();
+    const props = { ...floatingLayerType.createDefault(), count: 3, glow: false, particleType: "dot" };
+    floatingLayerType.render(props, ctx, BOUNDS, {} as any);
+    expect(ctx.createRadialGradient).not.toHaveBeenCalled();
+  });
 });

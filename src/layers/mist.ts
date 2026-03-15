@@ -148,14 +148,14 @@ export const mistLayerType: LayerTypeDefinition = {
       for (let ry = 0; ry < rh; ry++) {
         const normalizedY = ry / rh;
 
-        // Gaussian edge falloff
+        // Smoothstep edge falloff (smoother than t*t at low edgeSoftness)
         let edgeAlpha = 1;
         if (normalizedY < p.edgeSoftness) {
           const t = normalizedY / p.edgeSoftness;
-          edgeAlpha = t * t;
+          edgeAlpha = t * t * (3 - 2 * t);
         } else if (normalizedY > 1 - p.edgeSoftness) {
           const t = (1 - normalizedY) / p.edgeSoftness;
-          edgeAlpha = t * t;
+          edgeAlpha = t * t * (3 - 2 * t);
         }
 
         for (let rx = 0; rx < rw; rx++) {
@@ -188,12 +188,22 @@ export const mistLayerType: LayerTypeDefinition = {
       }
     }
 
-    // Draw at 1/4 resolution then stretch
-    const tempCanvas = new OffscreenCanvas(rw, rh);
-    const tempCtx = tempCanvas.getContext("2d")!;
-    tempCtx.putImageData(imageData, 0, 0);
-
-    ctx.drawImage(tempCanvas, bx, bandTopPx, width, bandHeight);
+    // Scale 1/4-res imageData up to full band size via nearest-neighbor — no OffscreenCanvas needed
+    const fullImageData = ctx.createImageData(width, bandHeight);
+    const fullData = fullImageData.data;
+    for (let fy = 0; fy < bandHeight; fy++) {
+      const ry = Math.min(Math.floor((fy / bandHeight) * rh), rh - 1);
+      for (let fx = 0; fx < width; fx++) {
+        const rx = Math.min(Math.floor((fx / width) * rw), rw - 1);
+        const src = (ry * rw + rx) * 4;
+        const dst = (fy * width + fx) * 4;
+        fullData[dst] = data[src]!;
+        fullData[dst + 1] = data[src + 1]!;
+        fullData[dst + 2] = data[src + 2]!;
+        fullData[dst + 3] = data[src + 3]!;
+      }
+    }
+    ctx.putImageData(fullImageData, bx, bandTopPx);
   },
 
   validate(properties): ValidationError[] | null {

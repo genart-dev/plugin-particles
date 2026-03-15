@@ -13,6 +13,14 @@ const path = require("path");
 const root = __dirname;
 const examplesDir = path.join(root, "examples");
 
+// Use local CLI dist directly — npx @genart-dev/cli uses the published npm cache
+// which lags behind local compositor builds and renders blank for new layer types.
+// Override with GENART_CLI env var or fall back to local dev build.
+const LOCAL_CLI = path.resolve(__dirname, "../cli/dist/index.js");
+const DEFAULT_CLI = fs.existsSync(LOCAL_CLI)
+  ? `node "${LOCAL_CLI}"`
+  : "npx @genart-dev/cli";
+
 // Recursively find all .genart files
 function findGenartFiles(dir) {
   const results = [];
@@ -42,7 +50,7 @@ for (const absFile of files) {
 
   try {
     execSync(
-      `${process.env.GENART_CLI || "npx @genart-dev/cli"} render "${absFile}" -o "${outFile}" --width 600 --height 600`,
+      `${process.env.GENART_CLI || DEFAULT_CLI} render "${absFile}" -o "${outFile}" --width 600 --height 600`,
       { stdio: "pipe", timeout: 30_000 }
     );
     console.log("OK");

@@ -6,6 +6,7 @@ import type {
 } from "@genart-dev/core";
 import { mulberry32 } from "../shared/prng.js";
 import { applyDepthToParticle } from "../shared/depth.js";
+import { parseHex } from "../shared/color-utils.js";
 import type { DepthEasing } from "../shared/depth.js";
 import {
   createDepthLaneProperty,
@@ -189,6 +190,19 @@ export const floatingLayerType: LayerTypeDefinition = {
       }
 
       const rotation = rng() * Math.PI * 2;
+
+      // Glow halo — drawn before shape so shape renders on top
+      if (p.glow) {
+        const glowR = size * 3;
+        const [gr, gg, gb] = parseHex(p.glowColor);
+        const grad = ctx.createRadialGradient(bx + x, by + y, 0, bx + x, by + y, glowR);
+        grad.addColorStop(0, `rgba(${gr},${gg},${gb},0.6)`);
+        grad.addColorStop(0.4, `rgba(${gr},${gg},${gb},0.15)`);
+        grad.addColorStop(1, `rgba(${gr},${gg},${gb},0)`);
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = grad;
+        ctx.fillRect(bx + x - glowR, by + y - glowR, glowR * 2, glowR * 2);
+      }
 
       ctx.globalAlpha = opacity;
       drawShape(ctx, bx + x, by + y, size, rotation, color, rng);
