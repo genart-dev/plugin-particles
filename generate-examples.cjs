@@ -1,25 +1,17 @@
 #!/usr/bin/env node
 /**
- * Generate .genart example files for all 15 particle presets + 6 atmosphere recipes.
+ * Generate .genart example files for all particle presets + atmosphere recipes.
  * Usage: node generate-examples.cjs
  */
 const fs = require("fs");
 const path = require("path");
 
 const examplesDir = path.join(__dirname, "examples");
-const NOW = "2026-03-11T00:00:00.000Z";
+const NOW = "2026-03-15T00:00:00.000Z";
 
-// --- Background colors per category ---
-const CATEGORY_BG = {
-  falling: "#0a1628",
-  floating: "#0d1117",
-  scatter: "#1a1a14",
-  mist: "#0e1218",
-};
-
-// --- All 15 presets with their full layer properties ---
+// --- All presets with their full layer properties ---
 const PRESETS = [
-  // ======== FALLING (4) ========
+  // ======== FALLING (9) ========
   {
     id: "snow",
     name: "Snow",
@@ -38,7 +30,9 @@ const PRESETS = [
       opacity: 0.8,
       windAngle: 15,
       windStrength: 0.3,
+      windTurbulence: 0.15,
       fallProgress: 0.7,
+      fallSpreadY: 0.3,
       depthDistribution: "uniform",
       depthEasing: "linear",
       horizonY: 0.3,
@@ -62,7 +56,9 @@ const PRESETS = [
       opacity: 0.5,
       windAngle: 5,
       windStrength: 0.1,
+      windTurbulence: 0,
       fallProgress: 1.0,
+      fallSpreadY: 0,
       depthDistribution: "uniform",
       depthEasing: "quadratic",
       horizonY: 0.25,
@@ -86,7 +82,9 @@ const PRESETS = [
       opacity: 0.9,
       windAngle: 25,
       windStrength: 0.5,
+      windTurbulence: 0.5,
       fallProgress: 0.5,
+      fallSpreadY: 0.6,
       depthDistribution: "foreground-heavy",
       depthEasing: "linear",
       horizonY: 0.3,
@@ -110,10 +108,142 @@ const PRESETS = [
       opacity: 0.85,
       windAngle: 30,
       windStrength: 0.4,
+      windTurbulence: 0.35,
       fallProgress: 0.4,
+      fallSpreadY: 0.5,
       depthDistribution: "uniform",
       depthEasing: "linear",
       horizonY: 0.35,
+    },
+  },
+  {
+    id: "embers",
+    name: "Embers",
+    category: "falling",
+    layerType: "particles:falling",
+    bg: "#0d0806",
+    properties: {
+      preset: "embers",
+      seed: 4477,
+      particleType: "ember",
+      count: 50,
+      sizeMin: 2,
+      sizeMax: 6,
+      color: "#FF6600",
+      colorVariation: 0.25,
+      opacity: 0.9,
+      windAngle: -10,
+      windStrength: 0.2,
+      windTurbulence: 0,
+      fallProgress: 0.6,
+      fallSpreadY: 0.4,
+      depthDistribution: "foreground-heavy",
+      depthEasing: "linear",
+      horizonY: 0.5,
+    },
+  },
+  {
+    id: "ash-fall",
+    name: "Ash Fall",
+    category: "falling",
+    layerType: "particles:falling",
+    bg: "#141414",
+    properties: {
+      preset: "ash-fall",
+      seed: 6631,
+      particleType: "ash",
+      count: 150,
+      sizeMin: 2,
+      sizeMax: 7,
+      color: "#888888",
+      colorVariation: 0.2,
+      opacity: 0.6,
+      windAngle: 5,
+      windStrength: 0.15,
+      windTurbulence: 0,
+      fallProgress: 0.8,
+      fallSpreadY: 0.2,
+      depthDistribution: "uniform",
+      depthEasing: "linear",
+      horizonY: 0.3,
+    },
+  },
+  {
+    id: "cherry-blossoms",
+    name: "Cherry Blossoms",
+    category: "falling",
+    layerType: "particles:falling",
+    bg: "#140a10",
+    properties: {
+      preset: "cherry-blossoms",
+      seed: 7113,
+      particleType: "petal",
+      count: 200,
+      sizeMin: 5,
+      sizeMax: 14,
+      color: "#FFB0C0",
+      colorVariation: 0.2,
+      opacity: 0.9,
+      windAngle: 35,
+      windStrength: 0.6,
+      windTurbulence: 0,
+      fallProgress: 0.6,
+      fallSpreadY: 0,
+      depthDistribution: "uniform",
+      depthEasing: "quadratic",
+      horizonY: 0.3,
+    },
+  },
+  {
+    id: "confetti",
+    name: "Confetti",
+    category: "falling",
+    layerType: "particles:falling",
+    bg: "#08080f",
+    properties: {
+      preset: "confetti",
+      seed: 8821,
+      particleType: "petal",
+      count: 120,
+      sizeMin: 4,
+      sizeMax: 10,
+      color: "#FF4488",
+      colorVariation: 0.5,
+      opacity: 0.95,
+      windAngle: 20,
+      windStrength: 0.35,
+      windTurbulence: 0.7,
+      fallProgress: 0.55,
+      fallSpreadY: 0.8,
+      depthDistribution: "uniform",
+      depthEasing: "linear",
+      horizonY: 0.25,
+    },
+  },
+  {
+    id: "pine-needles",
+    name: "Pine Needles",
+    category: "falling",
+    layerType: "particles:falling",
+    bg: "#0a1208",
+    properties: {
+      preset: "pine-needles",
+      seed: 3317,
+      particleType: "needle",
+      count: 100,
+      sizeMin: 5,
+      sizeMax: 14,
+      color: "#4A6B3A",
+      colorVariation: 0.15,
+      opacity: 0.8,
+      windAngle: 10,
+      windStrength: 0.25,
+      windTurbulence: 0,
+      fallProgress: 0.65,
+      fallSpreadY: 0,
+      depthDistribution: "foreground-heavy",
+      depthEasing: "linear",
+      horizonY: 0.3,
     },
   },
 
@@ -219,7 +349,7 @@ const PRESETS = [
     },
   },
 
-  // ======== SCATTER (3) ========
+  // ======== SCATTER (6) ========
   {
     id: "fallen-leaves",
     name: "Fallen Leaves",
@@ -289,8 +419,77 @@ const PRESETS = [
       depthEasing: "quadratic",
     },
   },
+  {
+    id: "shells",
+    name: "Shells",
+    category: "scatter",
+    layerType: "particles:scatter",
+    bg: "#0e1418",
+    properties: {
+      preset: "shells",
+      seed: 5519,
+      elementType: "shell",
+      count: 50,
+      sizeMin: 6,
+      sizeMax: 20,
+      color: "#D4C4A0",
+      colorVariation: 0.25,
+      rotationRange: 6.28,
+      distribution: "edge-weighted",
+      clusterStrength: 0,
+      groundY: 0.65,
+      horizonY: 0.3,
+      depthEasing: "quadratic",
+    },
+  },
+  {
+    id: "acorns",
+    name: "Acorns",
+    category: "scatter",
+    layerType: "particles:scatter",
+    bg: "#14100a",
+    properties: {
+      preset: "acorns",
+      seed: 7234,
+      elementType: "acorn",
+      count: 40,
+      sizeMin: 5,
+      sizeMax: 14,
+      color: "#8B5E3C",
+      colorVariation: 0.2,
+      rotationRange: 3.14,
+      distribution: "clustered",
+      clusterStrength: 0.5,
+      groundY: 0.7,
+      horizonY: 0.35,
+      depthEasing: "quadratic",
+    },
+  },
+  {
+    id: "sea-foam",
+    name: "Sea Foam",
+    category: "scatter",
+    layerType: "particles:scatter",
+    bg: "#0a1420",
+    properties: {
+      preset: "sea-foam",
+      seed: 9108,
+      elementType: "debris",
+      count: 90,
+      sizeMin: 3,
+      sizeMax: 10,
+      color: "#E8F0F8",
+      colorVariation: 0.15,
+      rotationRange: 6.28,
+      distribution: "edge-weighted",
+      clusterStrength: 0,
+      groundY: 0.8,
+      horizonY: 0.4,
+      depthEasing: "linear",
+    },
+  },
 
-  // ======== MIST (4) ========
+  // ======== MIST (6) ========
   {
     id: "morning-mist",
     name: "Morning Mist",
@@ -302,6 +501,7 @@ const PRESETS = [
       seed: 3142,
       density: 0.4,
       color: "#E8E8F0",
+      colorBottom: "#F0E8D0",
       opacity: 0.35,
       bandTop: 0.5,
       bandBottom: 0.8,
@@ -309,6 +509,7 @@ const PRESETS = [
       noiseScale: 3.0,
       noiseOctaves: 3,
       driftX: 0.1,
+      driftY: 0,
       driftPhase: 0,
       layerCount: 3,
       depthSpread: 0.2,
@@ -325,6 +526,7 @@ const PRESETS = [
       seed: 5927,
       density: 0.7,
       color: "#D0D0D8",
+      colorBottom: "",
       opacity: 0.5,
       bandTop: 0.4,
       bandBottom: 0.9,
@@ -332,6 +534,7 @@ const PRESETS = [
       noiseScale: 2.5,
       noiseOctaves: 4,
       driftX: 0.05,
+      driftY: 0,
       driftPhase: 0,
       layerCount: 5,
       depthSpread: 0.3,
@@ -348,6 +551,7 @@ const PRESETS = [
       seed: 7841,
       density: 0.25,
       color: "#C8D0E0",
+      colorBottom: "",
       opacity: 0.2,
       bandTop: 0.2,
       bandBottom: 0.7,
@@ -355,6 +559,7 @@ const PRESETS = [
       noiseScale: 4.0,
       noiseOctaves: 2,
       driftX: 0.15,
+      driftY: 0,
       driftPhase: 0,
       layerCount: 2,
       depthSpread: 0.15,
@@ -371,6 +576,7 @@ const PRESETS = [
       seed: 6553,
       density: 0.5,
       color: "#F0F0F0",
+      colorBottom: "#F8F0E0",
       opacity: 0.3,
       bandTop: 0.65,
       bandBottom: 0.95,
@@ -378,9 +584,60 @@ const PRESETS = [
       noiseScale: 5.0,
       noiseOctaves: 3,
       driftX: 0.02,
+      driftY: -0.25,
       driftPhase: 0,
       layerCount: 4,
       depthSpread: 0.1,
+    },
+  },
+  {
+    id: "ground-steam-thick",
+    name: "Ground Steam Thick",
+    category: "mist",
+    layerType: "particles:mist",
+    bg: "#0e1010",
+    properties: {
+      preset: "ground-steam-thick",
+      seed: 4219,
+      density: 0.75,
+      color: "#F0F0F0",
+      colorBottom: "#F0EAD8",
+      opacity: 0.45,
+      bandTop: 0.55,
+      bandBottom: 0.95,
+      edgeSoftness: 0.2,
+      noiseScale: 4.0,
+      noiseOctaves: 4,
+      driftX: 0.05,
+      driftY: -0.3,
+      driftPhase: 0,
+      layerCount: 6,
+      depthSpread: 0.15,
+    },
+  },
+  {
+    id: "smoke-wisps",
+    name: "Smoke Wisps",
+    category: "mist",
+    layerType: "particles:mist",
+    bg: "#0a0c10",
+    properties: {
+      preset: "smoke-wisps",
+      seed: 8833,
+      density: 0.35,
+      color: "#A0A0A8",
+      colorBottom: "",
+      opacity: 0.3,
+      bandTop: 0.3,
+      bandBottom: 0.75,
+      edgeSoftness: 0.35,
+      noiseScale: 6.0,
+      noiseOctaves: 3,
+      driftX: 0.08,
+      driftY: 0,
+      driftPhase: 0,
+      layerCount: 3,
+      depthSpread: 0.25,
     },
   },
 ];
@@ -491,6 +748,12 @@ function findPreset(presetId) {
   return PRESETS.find((p) => p.id === presetId);
 }
 
+// Ensure all example directories exist
+const categories = ["falling", "floating", "scatter", "mist", "atmosphere"];
+for (const cat of categories) {
+  fs.mkdirSync(path.join(examplesDir, cat), { recursive: true });
+}
+
 // --- Generate individual preset examples ---
 
 let totalFiles = 0;
@@ -528,14 +791,7 @@ for (const recipe of ATMOSPHERE_RECIPES) {
     }
     const props = { ...preset.properties, seed: layerDef.seed };
     layers.push(
-      makeLayer(
-        `layer-${i}`,
-        preset.layerType,
-        `${preset.name}`,
-        props,
-        W,
-        H,
-      ),
+      makeLayer(`layer-${i}`, preset.layerType, preset.name, props, W, H),
     );
   }
 
