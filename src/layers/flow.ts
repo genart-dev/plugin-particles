@@ -47,6 +47,8 @@ const FLOW_PROPERTIES: LayerPropertySchema[] = [
   { key: "noiseScale", label: "Noise Scale", type: "number", default: 1.2, min: 0.1, max: 8.0, step: 0.1, group: "field" },
   { key: "noiseOctaves", label: "Noise Octaves", type: "number", default: 3, min: 1, max: 6, step: 1, group: "field" },
   { key: "swirling", label: "Swirling", type: "number", default: 0.15, min: 0, max: 1, step: 0.05, group: "field" },
+  { key: "flowAngle", label: "Flow Angle", type: "number", default: 0, min: 0, max: 360, step: 5, group: "field" },
+  { key: "flowStrength", label: "Flow Strength", type: "number", default: 0, min: 0, max: 1, step: 0.05, group: "field" },
   { key: "sizeMin", label: "Size Min", type: "number", default: 0.8, min: 0.2, max: 20, step: 0.2, group: "size" },
   { key: "sizeMax", label: "Size Max", type: "number", default: 2.5, min: 0.2, max: 20, step: 0.2, group: "size" },
   { key: "color", label: "Color", type: "color", default: "#C8C8C8", group: "style" },
@@ -91,6 +93,8 @@ function resolveProps(properties: LayerProperties): {
   noiseScale: number;
   noiseOctaves: number;
   swirling: number;
+  flowAngle: number;
+  flowStrength: number;
   sizeMin: number;
   sizeMax: number;
   color: string;
@@ -114,6 +118,8 @@ function resolveProps(properties: LayerProperties): {
     noiseScale: (properties.noiseScale as number) ?? fp?.noiseScale ?? 1.2,
     noiseOctaves: (properties.noiseOctaves as number) ?? fp?.noiseOctaves ?? 3,
     swirling: (properties.swirling as number) ?? fp?.swirling ?? 0.15,
+    flowAngle: (properties.flowAngle as number) ?? fp?.flowAngle ?? 0,
+    flowStrength: (properties.flowStrength as number) ?? fp?.flowStrength ?? 0,
     sizeMin: (properties.sizeMin as number) ?? fp?.sizeMin ?? 0.8,
     sizeMax: (properties.sizeMax as number) ?? fp?.sizeMax ?? 2.5,
     color: (properties.color as string) || fp?.color || "#C8C8C8",
@@ -128,7 +134,9 @@ function resolveProps(properties: LayerProperties): {
 }
 
 /**
- * Compute curl of a 2D scalar noise field via finite differences.
+ * Compute curl of a 2D scalar noise field via finite differences,
+ * blended with an optional dominant flow direction.
+ *
  * curl_x = ∂N/∂y, curl_y = -∂N/∂x
  * Returns a normalised direction vector [dx, dy].
  */
@@ -137,13 +145,25 @@ function curlAt(
   ny: number,
   noise: (x: number, y: number) => number,
   swirling: number,
+  flowAngle: number = 0,
+  flowStrength: number = 0,
 ): [number, number] {
   const eps = 0.01;
   const ddx = (noise(nx + eps, ny) - noise(nx - eps, ny)) / (2 * eps);
   const ddy = (noise(nx, ny + eps) - noise(nx, ny - eps)) / (2 * eps);
   // Rotate curl by swirling * π/2 to add spiral bias
   const angle = Math.atan2(ddy, -ddx) + swirling * Math.PI * 0.5;
-  return [Math.cos(angle), Math.sin(angle)];
+  const curlDx = Math.cos(angle);
+  const curlDy = Math.sin(angle);
+
+  if (flowStrength <= 0) return [curlDx, curlDy];
+
+  // Blend curl with a dominant flow direction
+  const flowRad = (flowAngle * Math.PI) / 180;
+  const bx = (1 - flowStrength) * curlDx + flowStrength * Math.cos(flowRad);
+  const by = (1 - flowStrength) * curlDy + flowStrength * Math.sin(flowRad);
+  const len = Math.sqrt(bx * bx + by * by);
+  return len > 0.001 ? [bx / len, by / len] : [Math.cos(flowRad), Math.sin(flowRad)];
 }
 
 export const flowLayerType: LayerTypeDefinition = {
@@ -190,23 +210,58 @@ export const flowLayerType: LayerTypeDefinition = {
       }
 
       // Trace path through curl field
-      const points: Array<{ x: number; y: number; width: number }> = [];
+      // Collect raw positions first, then apply sin taper based on actual count.
+      const rawPts: Array<{ x: number; y: number }> = [];
       let cx = startX;
       let cy = startY;
 
-      for (let step = 0; step < p.pathSteps; step++) {
-        // Width taper: sin curve — 0 at start and end, max at middle
-        const t = step / (p.pathSteps - 1);
-        const widthScale = Math.sin(Math.PI * t);
-        points.push({ x: cx, y: cy, width: size * widthScale });
+      let prevDx = 0, prevDy = 0;
+      let cumAngle = 0, prevAngle = 0;
+      let hasDir = false;
+      // Loop detection: return-to-start within 5 step-lengths after ≥25% of path
+      const loopDistSq = (stepPx * 5) * (stepPx * 5);
+      const minLoopStep = Math.max(8, Math.floor(p.pathSteps * 0.25));
 
-        // Sample noise in normalised coordinates scaled by noiseScale
+      for (let step = 0; step < p.pathSteps; step++) {
         const nx = (cx / minDim) * p.noiseScale;
         const ny = (cy / minDim) * p.noiseScale;
-        const [dx, dy] = curlAt(nx, ny, noise, p.swirling);
+        const [dx, dy] = curlAt(nx, ny, noise, p.swirling, p.flowAngle, p.flowStrength);
+
+        if (hasDir) {
+          // Break on sharp direction reversal (>~115°)
+          if (dx * prevDx + dy * prevDy < -0.4) break;
+          // Accumulate rotation; break at 1.5 full turns as safety cap
+          const angle = Math.atan2(dy, dx);
+          let delta = angle - prevAngle;
+          if (delta > Math.PI) delta -= 2 * Math.PI;
+          if (delta < -Math.PI) delta += 2 * Math.PI;
+          cumAngle += delta;
+          if (Math.abs(cumAngle) > 3 * Math.PI) break;
+          prevAngle = angle;
+          // Closed-orbit detection: stop if path returns near its start point
+          if (step >= minLoopStep) {
+            const dsx = cx - startX, dsy = cy - startY;
+            if (dsx * dsx + dsy * dsy < loopDistSq) break;
+          }
+        } else {
+          prevAngle = Math.atan2(dy, dx);
+          hasDir = true;
+        }
+
+        rawPts.push({ x: cx, y: cy });
+        prevDx = dx; prevDy = dy;
         cx += dx * stepPx;
         cy += dy * stepPx;
       }
+
+      if (rawPts.length < 2) continue;
+
+      // Apply sin taper based on actual count so both ends always taper to 0
+      const n = rawPts.length;
+      const points = rawPts.map((pt, i) => ({
+        ...pt,
+        width: size * Math.sin(Math.PI * (i / (n - 1))),
+      }));
 
       if (points.length < 2) continue;
 

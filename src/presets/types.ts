@@ -118,6 +118,8 @@ export interface FlowPreset extends BasePreset {
   colorVariation: number;
   opacity: number;
   swirling: number;
+  flowAngle: number;
+  flowStrength: number;
   depthDistribution: DepthDistribution;
   depthEasing: DepthEasing;
   horizonY: number;
