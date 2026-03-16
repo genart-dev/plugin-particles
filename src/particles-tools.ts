@@ -128,6 +128,51 @@ function presetToProperties(
     props.driftPhase = preset.driftPhase;
     props.layerCount = preset.layerCount;
     props.depthSpread = preset.depthSpread;
+  } else if (preset.category === "trailing") {
+    props.count = preset.count;
+    props.sizeMin = preset.sizeMin;
+    props.sizeMax = preset.sizeMax;
+    props.trailLength = preset.trailLength;
+    props.motionAngle = preset.motionAngle;
+    props.motionVariation = preset.motionVariation;
+    props.color = preset.color;
+    props.colorVariation = preset.colorVariation;
+    props.opacity = preset.opacity;
+    props.glow = preset.glow;
+    props.glowColor = preset.glowColor;
+    props.depthDistribution = preset.depthDistribution;
+    props.depthEasing = preset.depthEasing;
+    props.horizonY = preset.horizonY;
+  } else if (preset.category === "flow") {
+    props.count = preset.count;
+    props.pathSteps = preset.pathSteps;
+    props.stepSize = preset.stepSize;
+    props.noiseScale = preset.noiseScale;
+    props.noiseOctaves = preset.noiseOctaves;
+    props.sizeMin = preset.sizeMin;
+    props.sizeMax = preset.sizeMax;
+    props.color = preset.color;
+    props.colorVariation = preset.colorVariation;
+    props.opacity = preset.opacity;
+    props.swirling = preset.swirling;
+    props.depthDistribution = preset.depthDistribution;
+    props.depthEasing = preset.depthEasing;
+    props.horizonY = preset.horizonY;
+  } else if (preset.category === "mark-field") {
+    props.count = preset.count;
+    props.markLength = preset.markLength;
+    props.markWidth = preset.markWidth;
+    props.angle = preset.angle;
+    props.angleVariation = preset.angleVariation;
+    props.curvature = preset.curvature;
+    props.markStyle = preset.markStyle;
+    props.color = preset.color;
+    props.colorVariation = preset.colorVariation;
+    props.opacity = preset.opacity;
+    props.depthBandMin = preset.depthBandMin;
+    props.depthBandMax = preset.depthBandMax;
+    props.depthEasing = preset.depthEasing;
+    props.horizonY = preset.horizonY;
   }
 
   // Apply user overrides
@@ -147,8 +192,8 @@ function presetToProperties(
 const addParticlesTool: McpToolDefinition = {
   name: "add_particles",
   description:
-    "Add a particle layer by preset name. Auto-resolves to the correct layer type (falling, floating, scatter, mist) " +
-    "from the preset category. 29 presets available across all categories.",
+    "Add a particle layer by preset name. Auto-resolves to the correct layer type (falling, floating, scatter, mist, trailing, flow, mark-field) " +
+    "from the preset category. 46 presets available across all categories.",
   inputSchema: {
     type: "object",
     properties: {
@@ -162,6 +207,9 @@ const addParticlesTool: McpToolDefinition = {
           "fallen-leaves", "pebbles", "wildflowers", "shells", "acorns", "sea-foam",
           "morning-mist", "valley-fog", "mountain-haze", "ground-steam",
           "ground-steam-thick", "smoke-wisps",
+          "meteor-shower", "speed-rain", "shooting-stars", "light-trails", "rising-sparks",
+          "flow-smoke", "ink-diffusion", "aurora", "lava-flow", "water-current", "wind-streams",
+          "grass-blades", "reed-field", "ink-scatter", "dry-brush", "charcoal-scatter", "calligraphy-marks",
         ],
         description: "Particle preset name.",
       },
@@ -220,13 +268,13 @@ const addParticlesTool: McpToolDefinition = {
 const listParticlePresetsTool: McpToolDefinition = {
   name: "list_particle_presets",
   description:
-    `List all ${ALL_PRESETS.length} particle presets, optionally filtered by category (falling, floating, scatter, mist).`,
+    `List all ${ALL_PRESETS.length} particle presets, optionally filtered by category (falling, floating, scatter, mist, trailing, flow, mark-field).`,
   inputSchema: {
     type: "object",
     properties: {
       category: {
         type: "string",
-        enum: ["falling", "floating", "scatter", "mist"],
+        enum: ["falling", "floating", "scatter", "mist", "trailing", "flow", "mark-field"],
         description: "Filter by category.",
       },
     },
@@ -591,13 +639,13 @@ const createAtmosphereTool: McpToolDefinition = {
 const randomizeParticlesTool: McpToolDefinition = {
   name: "randomize_particles",
   description:
-    "Add a random particle layer, optionally constrained by category (falling, floating, scatter, mist).",
+    "Add a random particle layer, optionally constrained by category (falling, floating, scatter, mist, trailing, flow, mark-field).",
   inputSchema: {
     type: "object",
     properties: {
       category: {
         type: "string",
-        enum: ["falling", "floating", "scatter", "mist"],
+        enum: ["falling", "floating", "scatter", "mist", "trailing", "flow", "mark-field"],
         description: "Constrain to this category. Omit for any.",
       },
       seed: { type: "number", description: "Random seed." },

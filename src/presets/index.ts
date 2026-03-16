@@ -4,6 +4,8 @@ import { FLOATING_PRESETS } from "./floating.js";
 import { SCATTER_PRESETS } from "./scatter.js";
 import { MIST_PRESETS } from "./mist.js";
 import { TRAILING_PRESETS } from "./trailing.js";
+import { FLOW_PRESETS } from "./flow.js";
+import { MARK_FIELD_PRESETS } from "./mark-field.js";
 
 export const ALL_PRESETS: ParticlePreset[] = [
   ...FALLING_PRESETS,
@@ -11,6 +13,8 @@ export const ALL_PRESETS: ParticlePreset[] = [
   ...SCATTER_PRESETS,
   ...MIST_PRESETS,
   ...TRAILING_PRESETS,
+  ...FLOW_PRESETS,
+  ...MARK_FIELD_PRESETS,
 ];
 
 /** Look up a preset by ID. */

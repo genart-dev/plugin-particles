@@ -1,0 +1,85 @@
+{
+  "genart": "1.3",
+  "id": "particles-ink-diffusion",
+  "title": "Ink Diffusion Particles",
+  "created": "2026-03-15T00:00:00.000Z",
+  "modified": "2026-03-15T00:00:00.000Z",
+  "renderer": {
+    "type": "canvas2d"
+  },
+  "canvas": {
+    "width": 600,
+    "height": 600
+  },
+  "parameters": [],
+  "colors": [],
+  "state": {
+    "seed": 42,
+    "params": {},
+    "colorPalette": []
+  },
+  "algorithm": "function sketch(ctx, state) {}",
+  "layers": [
+    {
+      "id": "bg-layer",
+      "type": "composite:solid",
+      "name": "Background",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 600,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {
+        "color": "#e8e4dc"
+      }
+    },
+    {
+      "id": "particle-layer",
+      "type": "particles:flow",
+      "name": "Ink Diffusion",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 600,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "properties": {
+        "preset": "ink-diffusion",
+        "seed": 5527,
+        "count": 40,
+        "pathSteps": 100,
+        "stepSize": 0.022,
+        "noiseScale": 1.8,
+        "noiseOctaves": 4,
+        "sizeMin": 1,
+        "sizeMax": 3.5,
+        "color": "#1A1A2E",
+        "colorVariation": 0.12,
+        "opacity": 0.7,
+        "swirling": 0.25,
+        "depthDistribution": "uniform",
+        "depthEasing": "quadratic",
+        "horizonY": 0.5
+      }
+    }
+  ]
+}

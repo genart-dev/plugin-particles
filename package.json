@@ -18,7 +18,9 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "license": "MIT",
   "author": {
     "name": "genart.dev",
@@ -52,7 +54,8 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@genart-dev/core": "^0.6.1"
+    "@genart-dev/core": "^0.6.1",
+    "@genart-dev/illustration": "^0.3.0"
   },
   "devDependencies": {
     "canvas": "^3.2.1",

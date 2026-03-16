@@ -151,7 +151,7 @@ describe("particles MCP tools", () => {
     it("lists all presets when no filter", async () => {
       const ctx = createMockContext();
       const result = await getTool("list_particle_presets").handler({}, ctx);
-      expect(result.content[0]!.text).toContain("34 presets");
+      expect(result.content[0]!.text).toContain("46 presets");
     });
 
     it("filters by category", async () => {

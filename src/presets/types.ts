@@ -104,7 +104,45 @@ export interface TrailingPreset extends BasePreset {
   horizonY: number;
 }
 
-/** Discriminated union of all particle presets. */
-export type ParticlePreset = FallingPreset | FloatingPreset | ScatterPreset | MistPreset | TrailingPreset;
+/** Curl-noise flow ribbon preset (smoke, ink diffusion, aurora). */
+export interface FlowPreset extends BasePreset {
+  category: "flow";
+  count: number;
+  pathSteps: number;
+  stepSize: number;
+  noiseScale: number;
+  noiseOctaves: number;
+  sizeMin: number;
+  sizeMax: number;
+  color: string;
+  colorVariation: number;
+  opacity: number;
+  swirling: number;
+  depthDistribution: DepthDistribution;
+  depthEasing: DepthEasing;
+  horizonY: number;
+}
 
-export type PresetCategory = "falling" | "floating" | "scatter" | "mist" | "trailing";
+/** Scattered tapered brush/ink stroke preset (grass, dry-brush texture, calligraphy). */
+export interface MarkFieldPreset extends BasePreset {
+  category: "mark-field";
+  count: number;
+  markLength: number;
+  markWidth: number;
+  angle: number;
+  angleVariation: number;
+  curvature: number;
+  markStyle: "ink" | "brush" | "pencil" | "technical";
+  color: string;
+  colorVariation: number;
+  opacity: number;
+  depthBandMin: number;
+  depthBandMax: number;
+  depthEasing: DepthEasing;
+  horizonY: number;
+}
+
+/** Discriminated union of all particle presets. */
+export type ParticlePreset = FallingPreset | FloatingPreset | ScatterPreset | MistPreset | TrailingPreset | FlowPreset | MarkFieldPreset;
+
+export type PresetCategory = "falling" | "floating" | "scatter" | "mist" | "trailing" | "flow" | "mark-field";

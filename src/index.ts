@@ -1,8 +1,8 @@
 /**
  * @genart-dev/plugin-particles — Depth-aware atmospheric particle layers
  *
- * 5 layer types (falling, floating, scatter, mist, trailing),
- * 34 presets, 9 MCP tools.
+ * 7 layer types (falling, floating, scatter, mist, trailing, flow, mark-field),
+ * 46 presets, 9 MCP tools.
  */
 
 import type { DesignPlugin, PluginContext } from "@genart-dev/core";
@@ -13,16 +13,19 @@ import {
   scatterLayerType,
   mistLayerType,
   trailingLayerType,
+  flowLayerType,
+  markFieldLayerType,
 } from "./layers/index.js";
 
 const particlesPlugin: DesignPlugin = {
   id: "particles",
   name: "Particles",
-  version: "0.2.0",
+  version: "0.3.0",
   description:
     "Depth-aware atmospheric particle layers: falling (snow, rain, leaves, embers, confetti), floating (dust, fireflies, butterflies, bubbles), " +
-    "scatter (ground elements, shells, acorns), mist (fog bands, steam, smoke), and trailing (meteors, speed rain, shooting stars, light trails). " +
-    "5 layer types, 34 presets, 9 MCP tools.",
+    "scatter (ground elements, shells, acorns), mist (fog bands, steam, smoke), trailing (meteors, speed rain, shooting stars, light trails), " +
+    "flow (curl-noise ribbons: smoke, ink, aurora, lava), and mark-field (scattered brush/ink strokes: grass, reeds, calligraphy). " +
+    "7 layer types, 46 presets, 9 MCP tools.",
 
   layerTypes: [
     fallingLayerType,
@@ -30,6 +33,8 @@ const particlesPlugin: DesignPlugin = {
     scatterLayerType,
     mistLayerType,
     trailingLayerType,
+    flowLayerType,
+    markFieldLayerType,
   ],
   tools: [],
   exportHandlers: [],
@@ -48,6 +53,8 @@ export {
   scatterLayerType,
   mistLayerType,
   trailingLayerType,
+  flowLayerType,
+  markFieldLayerType,
 } from "./layers/index.js";
 
 // Re-export presets
@@ -59,6 +66,8 @@ export type {
   ScatterPreset,
   MistPreset,
   TrailingPreset,
+  FlowPreset,
+  MarkFieldPreset,
   PresetCategory,
 } from "./presets/types.js";
 

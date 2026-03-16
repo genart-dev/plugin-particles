@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { ALL_PRESETS, getPreset, filterPresets, searchPresets } from "../src/presets/index.js";
 
 describe("presets", () => {
-  it("has 34 total presets", () => {
-    expect(ALL_PRESETS.length).toBe(34);
+  it("has 46 total presets", () => {
+    expect(ALL_PRESETS.length).toBe(46);
   });
 
   it("has 9 falling presets", () => {
@@ -61,6 +61,28 @@ describe("presets", () => {
     }
   });
 
+  it("has 6 flow presets", () => {
+    expect(filterPresets({ category: "flow" })).toHaveLength(6);
+  });
+
+  it("flow presets exist", () => {
+    for (const id of ["flow-smoke", "ink-diffusion", "aurora", "lava-flow", "water-current", "wind-streams"]) {
+      expect(getPreset(id)).toBeDefined();
+      expect(getPreset(id)!.category).toBe("flow");
+    }
+  });
+
+  it("has 6 mark-field presets", () => {
+    expect(filterPresets({ category: "mark-field" })).toHaveLength(6);
+  });
+
+  it("mark-field presets exist", () => {
+    for (const id of ["grass-blades", "reed-field", "ink-scatter", "dry-brush", "charcoal-scatter", "calligraphy-marks"]) {
+      expect(getPreset(id)).toBeDefined();
+      expect(getPreset(id)!.category).toBe("mark-field");
+    }
+  });
+
   it("all presets have unique IDs", () => {
     const ids = ALL_PRESETS.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -72,7 +94,7 @@ describe("presets", () => {
       expect(p.name).toBeTruthy();
       expect(p.description).toBeTruthy();
       expect(p.tags.length).toBeGreaterThan(0);
-      expect(["falling", "floating", "scatter", "mist", "trailing"]).toContain(p.category);
+      expect(["falling", "floating", "scatter", "mist", "trailing", "flow", "mark-field"]).toContain(p.category);
     }
   });
 
