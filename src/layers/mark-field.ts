@@ -182,6 +182,8 @@ function buildMarkProfile(
 
 export const markFieldLayerType: LayerTypeDefinition = {
   typeId: "particles:mark-field",
+  // Draws its particles at the canvas's own resolution (ADR 111).
+  resolution: "device",
   displayName: "Mark Field",
   icon: "pen",
   category: "draw",
@@ -194,6 +196,10 @@ export const markFieldLayerType: LayerTypeDefinition = {
 
   render(properties, ctx, bounds): void {
     const p = resolveProps(properties);
+    // Device pixels per layout unit (ADR 111). Positions come from the bounds
+    // and counts from the properties, both already right at any resolution;
+    // the particle sizes are in pixels, so they are scaled here.
+    const dsc = bounds.scale ?? 1;
     const { width, height, x: bx, y: by } = bounds;
     const minDim = Math.min(width, height);
     const rng = mulberry32(p.seed);
@@ -244,7 +250,7 @@ export const markFieldLayerType: LayerTypeDefinition = {
         startY,
         finalAngle,
         lengthPx,
-        p.markWidth * sizeScale,
+        p.markWidth * sizeScale * dsc,
         p.curvature,
         p.markStyle,
       );

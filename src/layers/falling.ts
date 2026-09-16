@@ -154,6 +154,8 @@ function resolveProps(properties: LayerProperties): {
 
 export const fallingLayerType: LayerTypeDefinition = {
   typeId: "particles:falling",
+  // Draws its particles at the canvas's own resolution (ADR 111).
+  resolution: "device",
   displayName: "Falling Particles",
   icon: "snowflake",
   category: "draw",
@@ -166,6 +168,10 @@ export const fallingLayerType: LayerTypeDefinition = {
 
   render(properties, ctx, bounds): void {
     const p = resolveProps(properties);
+    // Device pixels per layout unit (ADR 111). Positions come from the bounds
+    // and counts from the properties, both already right at any resolution;
+    // the particle sizes are in pixels, so they are scaled here.
+    const dsc = bounds.scale ?? 1;
     const { width, height, x: bx, y: by } = bounds;
     const rng = mulberry32(p.seed);
     const drawShape = getFallingShape(p.particleType);
@@ -204,8 +210,8 @@ export const fallingLayerType: LayerTypeDefinition = {
       const depthSample = sampleDepthDistribution(rng, p.depthDistribution);
       let { size, opacity } = applyDepthToParticle(
         depthSample,
-        p.sizeMin,
-        p.sizeMax,
+        p.sizeMin * dsc,
+        p.sizeMax * dsc,
         p.opacity,
       );
 

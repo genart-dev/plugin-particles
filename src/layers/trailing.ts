@@ -125,6 +125,8 @@ function resolveProps(properties: LayerProperties): {
 
 export const trailingLayerType: LayerTypeDefinition = {
   typeId: "particles:trailing",
+  // Draws its particles at the canvas's own resolution (ADR 111).
+  resolution: "device",
   displayName: "Trailing Particles",
   icon: "meteor",
   category: "draw",
@@ -137,6 +139,10 @@ export const trailingLayerType: LayerTypeDefinition = {
 
   render(properties, ctx, bounds): void {
     const p = resolveProps(properties);
+    // Device pixels per layout unit (ADR 111). Positions come from the bounds
+    // and counts from the properties, both already right at any resolution;
+    // the particle sizes are in pixels, so they are scaled here.
+    const dsc = bounds.scale ?? 1;
     const { width, height, x: bx, y: by } = bounds;
     const rng = mulberry32(p.seed);
 
@@ -163,7 +169,7 @@ export const trailingLayerType: LayerTypeDefinition = {
 
       // Depth-based sizing
       const depthSample = sampleDepthDistribution(rng, p.depthDistribution);
-      let { size, opacity } = applyDepthToParticle(depthSample, p.sizeMin, p.sizeMax, p.opacity);
+      let { size, opacity } = applyDepthToParticle(depthSample, p.sizeMin * dsc, p.sizeMax * dsc, p.opacity);
 
       if (subAtt) {
         size *= subAtt.sizeScale;

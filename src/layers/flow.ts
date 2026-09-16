@@ -168,6 +168,8 @@ function curlAt(
 
 export const flowLayerType: LayerTypeDefinition = {
   typeId: "particles:flow",
+  // Draws its particles at the canvas's own resolution (ADR 111).
+  resolution: "device",
   displayName: "Flow Particles",
   icon: "wind",
   category: "draw",
@@ -180,6 +182,10 @@ export const flowLayerType: LayerTypeDefinition = {
 
   render(properties, ctx, bounds): void {
     const p = resolveProps(properties);
+    // Device pixels per layout unit (ADR 111). Positions come from the bounds
+    // and counts from the properties, both already right at any resolution;
+    // the particle sizes are in pixels, so they are scaled here.
+    const dsc = bounds.scale ?? 1;
     const { width, height, x: bx, y: by } = bounds;
     const minDim = Math.min(width, height);
     const rng = mulberry32(p.seed);
@@ -198,7 +204,7 @@ export const flowLayerType: LayerTypeDefinition = {
       const startY = rng() * height;
       const depthT = sampleDepthDistribution(rng, p.depthDistribution);
 
-      let { size, opacity } = applyDepthToParticle(depthT, p.sizeMin, p.sizeMax, p.opacity);
+      let { size, opacity } = applyDepthToParticle(depthT, p.sizeMin * dsc, p.sizeMax * dsc, p.opacity);
       if (subAtt) {
         size *= subAtt.sizeScale;
         opacity *= subAtt.opacity;

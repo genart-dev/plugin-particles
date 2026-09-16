@@ -173,6 +173,8 @@ function sampleDistribution(
 
 export const scatterLayerType: LayerTypeDefinition = {
   typeId: "particles:scatter",
+  // Draws its particles at the canvas's own resolution (ADR 111).
+  resolution: "device",
   displayName: "Scatter",
   icon: "scatter",
   category: "draw",
@@ -216,6 +218,10 @@ export const scatterLayerType: LayerTypeDefinition = {
 
     const particles: ScatterParticle[] = [];
 
+    // Device pixels per layout unit (ADR 111). Particle positions and counts
+    // come from the bounds and the properties respectively, and both are
+    // already right; the particle sizes are in pixels, so they scale here.
+    const dsc = bounds.scale ?? 1;
     for (let i = 0; i < p.count; i++) {
       const { x: nx, y: ny } = sampleDistribution(
         rng,
@@ -233,7 +239,7 @@ export const scatterLayerType: LayerTypeDefinition = {
         distribution: "uniform",
       });
 
-      let { size, opacity } = applyDepthToParticle(depth, p.sizeMin, p.sizeMax, 1);
+      let { size, opacity } = applyDepthToParticle(depth, p.sizeMin * dsc, p.sizeMax * dsc, 1);
 
       if (subAtt) {
         size *= subAtt.sizeScale;

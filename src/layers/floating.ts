@@ -139,6 +139,8 @@ function resolveProps(properties: LayerProperties): {
 
 export const floatingLayerType: LayerTypeDefinition = {
   typeId: "particles:floating",
+  // Draws its particles at the canvas's own resolution (ADR 111).
+  resolution: "device",
   displayName: "Floating Particles",
   icon: "sparkle",
   category: "draw",
@@ -151,6 +153,10 @@ export const floatingLayerType: LayerTypeDefinition = {
 
   render(properties, ctx, bounds): void {
     const p = resolveProps(properties);
+    // Device pixels per layout unit (ADR 111). Positions come from the bounds
+    // and counts from the properties, both already right at any resolution;
+    // the particle sizes are in pixels, so they are scaled here.
+    const dsc = bounds.scale ?? 1;
     const { width, height, x: bx, y: by } = bounds;
     const rng = mulberry32(p.seed);
     const drawShape = getFloatingShape(p.particleType);
@@ -191,8 +197,8 @@ export const floatingLayerType: LayerTypeDefinition = {
       // Depth-based sizing
       let { size, opacity } = applyDepthToParticle(
         depthT,
-        p.sizeMin,
-        p.sizeMax,
+        p.sizeMin * dsc,
+        p.sizeMax * dsc,
         p.opacity,
       );
 

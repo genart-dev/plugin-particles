@@ -100,6 +100,9 @@ function resolveProps(properties: LayerProperties): {
 
 export const mistLayerType: LayerTypeDefinition = {
   typeId: "particles:mist",
+  // Its band and noise are sized as fractions of the layer, so they follow a
+  // device-resolution buffer without further scaling (ADR 111).
+  resolution: "device",
   displayName: "Mist",
   icon: "mist",
   category: "draw",
