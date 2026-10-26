@@ -20,7 +20,7 @@ import {
 const particlesPlugin: DesignPlugin = {
   id: "particles",
   name: "Particles",
-  version: "0.3.0",
+  version: "0.4.0",
   description:
     "Depth-aware atmospheric particle layers: falling (snow, rain, leaves, embers, confetti), floating (dust, fireflies, butterflies, bubbles), " +
     "scatter (ground elements, shells, acorns), mist (fog bands, steam, smoke), trailing (meteors, speed rain, shooting stars, light trails), " +
